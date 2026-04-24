@@ -4,8 +4,9 @@
   "description": "Habit tracker API built with Node.js, Express, and PostgreSQL",
   "main": "src/index.ts",
   "scripts": {
-    "dev": "node --watch src/index.ts",
-    "start": "node src/index.ts",
+    "build": "tsc --outDir dist",
+    "dev": "NODE_ENV=development tsx --watch src/index.ts",
+    "start": "NODE_ENV=production node dist/src/index.js",
     "test": "vitest run"
   },
   "keywords": [
@@ -23,10 +24,13 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "pg": "^8.20.0",
-    "ts-node": "^10.9.2"
+    "ts-node": "^10.9.2",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@types/express": "^5.0.6",
     "@types/node": "^25.6.0",
+    "tsx": "^4.21.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.5"
   }
