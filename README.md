@@ -10,6 +10,7 @@ A RESTful API for tracking daily habits, built with Node.js, Express, and Postgr
 - [Environment Variables](#environment-variables)
 - [Running the Application](#running-the-application)
 - [API Documentation](#api-documentation)
+- [Configuration](#configuration)
 - [Testing](#testing)
 - [Project Structure](#project-structure)
 - [Technologies](#technologies)
@@ -56,6 +57,7 @@ Environment variables are managed through `.env` and `.env.development` files. T
 |----------|------|---------|-------------|
 | `NODE_ENV` | `string` | `development` | Application environment (`development` or `production`) |
 | `PORT` | `number` | `3000` | Server port number |
+| `CORS_ORIGIN` | `string` | `*` | Allowed origin for CORS requests (e.g., `http://localhost:3000`) |
 
 ### Configuration Files
 
@@ -63,6 +65,15 @@ Environment variables are managed through `.env` and `.env.development` files. T
 - **Production**: `.env` - Used when `NODE_ENV=production`
 
 The application validates environment variables on startup and will exit with a detailed error message if validation fails.
+
+### CORS Configuration
+
+Cross-Origin Resource Sharing (CORS) is configured via the `CORS_ORIGIN` environment variable.
+
+**Note**: Only a single domain is accepted at this time. Multiple origins are not supported.
+
+- **Development**: Set to `*` to allow all origins (default)
+- **Production**: Set to your client domain (e.g., `https://yourdomain.com`)
 
 ## Running the Application
 
@@ -89,40 +100,40 @@ PORT=8080 npm start
 
 ## API Documentation
 
-### Base URL
-```
-http://localhost:3000
-```
+For comprehensive API endpoint documentation including request/response examples, see [API_DOCS.md](./API_DOCS.md).
 
-### Endpoints
+### Available API Routes
+- **Authentication**: `/api/auth` - Register, login, logout, and token refresh
+- **Users**: `/api/users` - User management (CRUD operations)
+- **Habits**: `/api/habits` - Habit tracking and completion
+- **Tags**: `/api/tags` - Tag management for organizing habits
 
-#### Health Check
-Returns the health status of the API server.
-
-**Request**
+### Health Check
 ```
 GET /health
 ```
+Returns `{ status: "ok", timestamp: "...", service: "Habit tracker API" }`
 
-**Response (200 OK)**
-```json
-{
-  "status": "ok",
-  "timestamp": "2026-04-24T12:30:45.123Z",
-  "service": "Habit tracker API"
-}
-```
+## Configuration
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `status` | string | Health status (`ok` indicates service is running) |
-| `timestamp` | string | ISO 8601 formatted timestamp of the response |
-| `service` | string | Service name identifier |
+### TypeScript Configuration
+The project uses TypeScript with ES modules. Key configurations in `tsconfig.json`:
 
-**Example Usage**
-```bash
-curl http://localhost:3000/health
-```
+- **Module Resolution**: Uses `"bundler"` for flexible module resolution without requiring explicit file extensions
+- **File Extensions**: Relative imports don't require `.ts` extensions in source code (automatically added during compilation)
+- **Syntax**: `rewriteRelativeImportExtensions: true` ensures proper extension handling during build
+
+### Security & Middleware
+The application includes:
+- **CORS** - Cross-Origin Resource Sharing for secure API access
+- **Helmet** - HTTP headers hardening for security
+- **Morgan** - HTTP request logging
+
+### Validation
+All request bodies and parameters are validated using **Zod schemas**:
+- Strong type safety with TypeScript inference
+- Automatic error messages for validation failures
+- Schemas defined in `src/schemas/`
 
 ## Testing
 
@@ -146,15 +157,33 @@ The health check endpoint is tested to ensure:
 ```
 habit-tracker/
 ├── src/
-│   ├── server.ts        # Express app configuration and routes
-│   ├── index.ts         # Application entry point
+│   ├── index.ts              # Application entry point
+│   ├── server.ts             # Express app configuration and routes
+│   ├── middleware/
+│   │   └── validation.ts     # Request validation middleware
+│   ├── routes/
+│   │   ├── authRoutes.ts     # Authentication endpoints
+│   │   ├── habitRoutes.ts    # Habit management endpoints
+│   │   ├── tagRoutes.ts      # Tag management endpoints
+│   │   └── userRoutes.ts     # User management endpoints
+│   ├── schemas/
+│   │   ├── habit.ts          # Habit validation schema
+│   │   └── user.ts           # User validation schema
 │   └── tests/
-│       └── server.test.ts   # API endpoint tests
-├── env.ts               # Environment variable configuration and validation
-├── package.json         # Project metadata and dependencies
-├── tsconfig.json        # TypeScript configuration
-├── vitest.config.ts     # Vitest configuration
-└── README.md           # Project documentation
+│       ├── server.test.ts    # Server tests
+│       ├── middleware/
+│       │   └── validate-body.test.ts
+│       └── routes/
+│           ├── authRoutes.test.ts
+│           ├── habitRoutes.test.ts
+│           ├── tagRoutes.test.ts
+│           └── userRoutes.test.ts
+├── env.ts                    # Environment variable configuration and validation
+├── API_DOCS.md              # API endpoint documentation
+├── package.json             # Project metadata and dependencies
+├── tsconfig.json            # TypeScript configuration
+├── vitest.config.ts         # Vitest configuration
+└── README.md                # Project documentation
 ```
 
 ## Technologies
@@ -168,14 +197,17 @@ habit-tracker/
 - **PostgreSQL** - Database system
 - **pg** - PostgreSQL client for Node.js
 
+### Security & Middleware
+- **Helmet** - HTTP security headers
+- **CORS** - Cross-Origin Resource Sharing
+- **Morgan** - HTTP request logging
+
 ### Development Tools
 - **tsx** - TypeScript executor with watch mode
 - **ts-node** - TypeScript execution for Node.js
 - **Vitest** - Unit testing framework
 - **Supertest** - HTTP assertion library
-- **Zod** - TypeScript-first schema validation
-
-### Other
+- **Zod** - TypeScript-first schema validation for runtime type checking
 - **dotenv** - Environment variable loader
 
 ## Scripts
