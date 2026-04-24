@@ -1,4 +1,10 @@
 import { Router } from "express";
+import {
+  createUserSchema,
+  updateUserSchema,
+  userIdSchema,
+} from "../schemas/user.ts";
+import { validateBody, validateParams } from "../middleware/validation.ts";
 
 const router = Router();
 
@@ -6,19 +12,24 @@ router.get("/", (req, res) => {
   res.json({ message: "Get all users" });
 });
 
-router.get("/:id", (req, res) => {
+router.get("/:id", validateParams(userIdSchema), (req, res) => {
   res.json({ message: `Get user with ID ${req.params.id}` });
 });
 
-router.post("/", (req, res) => {
+router.post("/", validateBody(createUserSchema), (req, res) => {
   res.status(201).json({ message: "Created a new user" });
 });
 
-router.put("/:id", (req, res) => {
-  res.json({ message: `Updated user with ID ${req.params.id}` });
-});
+router.put(
+  "/:id",
+  validateParams(userIdSchema),
+  validateBody(updateUserSchema),
+  (req, res) => {
+    res.json({ message: `Updated user with ID ${req.params.id}` });
+  },
+);
 
-router.delete("/:id", (req, res) => {
+router.delete("/:id", validateParams(userIdSchema), (req, res) => {
   res.json({ message: `Deleted user with ID ${req.params.id}` });
 });
 

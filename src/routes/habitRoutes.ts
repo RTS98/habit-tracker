@@ -1,4 +1,6 @@
 import Router from "express";
+import { validateBody } from "../middleware/validation.ts";
+import createHabitSchema from "../schemas/habit.ts";
 
 const router = Router();
 
@@ -10,7 +12,7 @@ router.get("/:id", (req, res) => {
   res.json({ message: `Get habit with ID ${req.params.id}` });
 });
 
-router.post("/", (req, res) => {
+router.post("/", validateBody(createHabitSchema), (req, res) => {
   res.status(201).json({ message: "Created a new habit" });
 });
 

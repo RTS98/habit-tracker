@@ -12,6 +12,7 @@ if (isProduction) {
 
 const envSchema = z.object({
   PORT: z.coerce.number().positive().default(3000),
+  CORS_ORIGIN: z.url().default("http://localhost:3000"),
 });
 
 export type Env = z.infer<typeof envSchema>;
