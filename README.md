@@ -9,6 +9,7 @@ A RESTful API for tracking daily habits, built with Node.js, Express, and Postgr
 - [Installation](#installation)
 - [Environment Variables](#environment-variables)
 - [Running the Application](#running-the-application)
+- [Database](#database)
 - [API Documentation](#api-documentation)
 - [Configuration](#configuration)
 - [Testing](#testing)
@@ -58,6 +59,8 @@ Environment variables are managed through `.env` and `.env.development` files. T
 | `NODE_ENV` | `string` | `development` | Application environment (`development` or `production`) |
 | `PORT` | `number` | `3000` | Server port number |
 | `CORS_ORIGIN` | `string` | `*` | Allowed origin for CORS requests (e.g., `http://localhost:3000`) |
+| `DATABASE_URL` | `string` | - | PostgreSQL connection string (required) |
+| `DB_CERT_PATH` | `string` | - | Path to database SSL certificate (optional, production only) |
 
 ### Configuration Files
 
@@ -74,6 +77,23 @@ Cross-Origin Resource Sharing (CORS) is configured via the `CORS_ORIGIN` environ
 
 - **Development**: Set to `*` to allow all origins (default)
 - **Production**: Set to your client domain (e.g., `https://yourdomain.com`)
+
+### Database Configuration
+
+The application requires a PostgreSQL database. Set the `DATABASE_URL` environment variable with your connection string:
+
+```bash
+# Local development
+DATABASE_URL=postgresql://user:password@localhost:5432/habit_tracker_dev
+
+# Remote/Docker (example)
+DATABASE_URL=postgresql://user:password@db-host:5432/habit_tracker_prod
+```
+
+**SSL/TLS Certificates:**
+- **Development**: SSL is disabled by default
+- **Production**: SSL is automatically enabled with certificate verification
+- Optional: Set `DB_CERT_PATH` to specify a custom CA certificate for self-signed certificates
 
 ## Running the Application
 
@@ -96,6 +116,95 @@ The server will start on the PORT specified in environment variables (default: 3
 ### Production with Custom Port
 ```bash
 PORT=8080 npm start
+```
+
+## Database
+
+The application uses **Drizzle ORM** for type-safe database operations with PostgreSQL.
+
+### Database Schema
+
+```
+┌─────────────────────┐
+│      USERS          │
+├─────────────────────┤
+│ id (UUID) [PK]      │
+│ email (VARCHAR)     │
+│ username (VARCHAR)  │
+│ passwordHash        │
+│ firstName           │
+│ lastName            │
+│ createdAt           │
+│ updatedAt           │
+│ deletedAt           │
+└─────────────────────┘
+        │
+        │ 1:N
+        ▼
+┌─────────────────────┐
+│      HABITS         │
+├─────────────────────┤
+│ id (UUID) [PK]      │
+│ user_id (UUID) [FK] │
+│ name (VARCHAR)      │
+│ description (TEXT)  │
+│ frequency (VARCHAR) │
+│ target_count (INT)  │
+│ is_active (BOOLEAN) │
+│ createdAt           │
+│ updatedAt           │
+└─────────────────────┘
+    │            │
+    │ 1:N        │ N:M
+    │            └──────────┐
+    ▼                       ▼
+┌─────────────────────┐   ┌──────────────────┐
+│  HABIT_ENTRIES      │   │   HABIT_TAGS     │
+├─────────────────────┤   ├──────────────────┤
+│ id (UUID) [PK]      │   │ id (UUID) [PK]   │
+│ habit_id (UUID)[FK] │   │ habit_id (FK)    │
+│ completion_data     │   │ tag_id (FK)      │
+│ note (TEXT)         │   │ createdAt        │
+│ createdAt           │   └──────────────────┘
+└─────────────────────┘         │
+                                │ N:1
+                                ▼
+                        ┌──────────────────┐
+                        │      TAGS        │
+                        ├──────────────────┤
+                        │ id (UUID) [PK]   │
+                        │ name (VARCHAR)   │
+                        │ color (VARCHAR)  │
+                        │ createdAt        │
+                        │ updatedAt        │
+                        └──────────────────┘
+```
+
+### Database Management
+
+**Generate migrations from schema changes:**
+```bash
+npm run db:generate
+```
+
+**Apply pending migrations:**
+```bash
+npm run db:push
+```
+
+**Run database migrations:**
+```bash
+npm run db:migrate
+```
+
+**Seed the database with demo data:**
+```bash
+npm run db:seed
+```
+
+**Open Drizzle Studio for visual database management:**
+```bash
+npm run db:studio
 ```
 
 ## API Documentation
@@ -123,17 +232,19 @@ The project uses TypeScript with ES modules. Key configurations in `tsconfig.jso
 - **File Extensions**: Relative imports don't require `.ts` extensions in source code (automatically added during compilation)
 - **Syntax**: `rewriteRelativeImportExtensions: true` ensures proper extension handling during build
 
+### Database with Drizzle ORM
+Database operations use **Drizzle ORM** for type-safe SQL:
+- Migrations managed through `drizzle-kit` commands
+- Full type inference from schema definitions
+- Schema relationships properly defined with Drizzle relations
+- Supports PostgreSQL specific features and constraints
+
 ### Security & Middleware
 The application includes:
 - **CORS** - Cross-Origin Resource Sharing for secure API access
 - **Helmet** - HTTP headers hardening for security
 - **Morgan** - HTTP request logging
-
-### Validation
-All request bodies and parameters are validated using **Zod schemas**:
-- Strong type safety with TypeScript inference
-- Automatic error messages for validation failures
-- Schemas defined in `src/schemas/`
+- **SSL/TLS** - Automatic SSL in production environments with certificate support
 
 ## Testing
 
@@ -196,6 +307,8 @@ habit-tracker/
 ### Database
 - **PostgreSQL** - Database system
 - **pg** - PostgreSQL client for Node.js
+- **Drizzle ORM** - Type-safe ORM with schema management
+- **Drizzle-Zod** - Generate Zod schemas from Drizzle tables
 
 ### Security & Middleware
 - **Helmet** - HTTP security headers
@@ -207,7 +320,7 @@ habit-tracker/
 - **ts-node** - TypeScript execution for Node.js
 - **Vitest** - Unit testing framework
 - **Supertest** - HTTP assertion library
-- **Zod** - TypeScript-first schema validation for runtime type checking
+- **Drizzle Kit** - ORM toolkit for migrations and schema management
 - **dotenv** - Environment variable loader
 
 ## Scripts
@@ -218,6 +331,11 @@ habit-tracker/
 | `npm run build` | Compile TypeScript to JavaScript |
 | `npm start` | Start production server |
 | `npm test` | Run all tests |
+| `npm run db:generate` | Generate migration files from schema changes |
+| `npm run db:push` | Apply migrations to database |
+| `npm run db:migrate` | Run pending migrations |
+| `npm run db:studio` | Open Drizzle Studio visual editor |
+| `npm run db:seed` | Seed database with demo data |
 
 ## License
 
