@@ -6,6 +6,7 @@ import userRoutes from "./routes/userRoutes.ts";
 import habitRoutes from "./routes/habitRoutes.ts";
 import tagRoutes from "./routes/tagRoutes.ts";
 import env from "../env.ts";
+import createHabitSchema from "./schemas/habit.ts";
 
 const app = express();
 

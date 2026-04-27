@@ -1,9 +1,5 @@
 import { Router } from "express";
-import {
-  createUserSchema,
-  updateUserSchema,
-  userIdSchema,
-} from "../schemas/user.ts";
+import { insertUserSchema, updateUserSchema, userIdSchema } from "../schemas/user.ts";
 import { validateBody, validateParams } from "../middleware/validation.ts";
 
 const router = Router();
@@ -16,7 +12,7 @@ router.get("/:id", validateParams(userIdSchema), (req, res) => {
   res.json({ message: `Get user with ID ${req.params.id}` });
 });
 
-router.post("/", validateBody(createUserSchema), (req, res) => {
+router.post("/", validateBody(insertUserSchema), (req, res) => {
   res.status(201).json({ message: "Created a new user" });
 });
 
