@@ -1,18 +1,19 @@
 import dotenv from "dotenv";
 import z from "zod";
 
-const isProduction = process.env.NODE_ENV === "production";
+export const isProduction = process.env.NODE_ENV === "production";
 const isDevelopment = process.env.NODE_ENV === "development";
 
 if (isProduction) {
   dotenv.config({ path: "./.env" });
-} else if (isDevelopment) {
+} else {
   dotenv.config({ path: "./.env.development" });
 }
 
 const envSchema = z.object({
   PORT: z.coerce.number().positive().default(3000),
   CORS_ORIGIN: z.url().default("http://localhost:3000"),
+  DATABASE_URL: z.url(),
 });
 
 export type Env = z.infer<typeof envSchema>;
