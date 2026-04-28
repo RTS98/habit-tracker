@@ -1,11 +1,16 @@
 import { Router } from "express";
 import {
+  changePasswordSchema,
   insertUserSchema,
   updateUserSchema,
   userIdSchema,
 } from "../schemas/user.ts";
 import { validateBody, validateParams } from "../middleware/validation.ts";
 import { authenticateToken } from "../middleware/auth.ts";
+import {
+  changePassword,
+  updateProfile,
+} from "../controllers/userController.ts";
 
 const router = Router();
 
@@ -30,6 +35,13 @@ router.put(
   (req, res) => {
     res.json({ message: `Updated user with ID ${req.params.id}` });
   },
+);
+
+router.put("/profile", validateBody(updateUserSchema), updateProfile);
+router.post(
+  "/change-password",
+  validateBody(changePasswordSchema),
+  changePassword,
 );
 
 router.delete("/:id", validateParams(userIdSchema), (req, res) => {

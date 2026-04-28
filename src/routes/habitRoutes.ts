@@ -1,32 +1,32 @@
 import Router from "express";
-import { validateBody } from "../middleware/validation.ts";
-import createHabitSchema from "../schemas/habit.ts";
+import { validateBody, validateParams } from "../middleware/validation.ts";
+import {
+  createHabitSchema,
+  updateHabitSchema,
+  uuidSchema,
+} from "../schemas/habit.ts";
 import { authenticateToken } from "../middleware/auth.ts";
+import {
+  createHabit,
+  deleteHabit,
+  getHabitById,
+  getUserHabits,
+  updateHabit,
+} from "../controllers/habitController.ts";
 
 const router = Router();
 
 router.use(authenticateToken);
 
-router.get("/", (req, res) => {
-  res.json({ message: "Get all habits" });
-});
-
-router.get("/:id", (req, res) => {
-  res.json({ message: `Get habit with ID ${req.params.id}` });
-});
-
-router.post("/", validateBody(createHabitSchema), (req, res) => {
-  res.status(201).json({ message: "Created a new habit" });
-});
-
-router.post("/:id/complete", (req, res) => {
-  res.status(201).json({
-    message: `Marked habit as complete for user with ID ${req.params.id}`,
-  });
-});
-
-router.delete("/:id", (req, res) => {
-  res.json({ message: `Deleted habit with ID ${req.params.id}` });
-});
+router.get("/", getUserHabits);
+router.get("/:id", validateParams(uuidSchema), getHabitById);
+router.post("/", validateBody(createHabitSchema), createHabit);
+router.put(
+  "/:id",
+  validateParams(uuidSchema),
+  validateBody(updateHabitSchema),
+  updateHabit,
+);
+router.delete("/:id", validateParams(uuidSchema), deleteHabit);
 
 export default router;
