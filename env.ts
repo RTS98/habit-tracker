@@ -14,6 +14,10 @@ const envSchema = z.object({
   PORT: z.coerce.number().positive().default(3000),
   CORS_ORIGIN: z.url().default("http://localhost:3000"),
   DATABASE_URL: z.url(),
+  JWT_SECRET: z
+    .string()
+    .min(32, "JWT_SECRET must be at least 32 characters long"),
+  JWT_EXPIRES_IN: z.string().default("7d"),
 });
 
 export type Env = z.infer<typeof envSchema>;

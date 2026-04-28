@@ -61,6 +61,8 @@ Environment variables are managed through `.env` and `.env.development` files. T
 | `CORS_ORIGIN` | `string` | `*` | Allowed origin for CORS requests (e.g., `http://localhost:3000`) |
 | `DATABASE_URL` | `string` | - | PostgreSQL connection string (required) |
 | `DB_CERT_PATH` | `string` | - | Path to database SSL certificate (optional, production only) |
+| `JWT_SECRET` | `string` | - | Secret key for signing JWT tokens (required, min 32 characters) |
+| `JWT_EXPIRES_IN` | `string` | `7d` | JWT token expiration time (e.g., `7d`, `24h`, `1w`) |
 
 ### Configuration Files
 
@@ -207,6 +209,65 @@ npm run db:seed
 npm run db:studio
 ```
 
+## Authentication
+
+The API uses **JWT (JSON Web Tokens)** for authentication. All protected endpoints require a valid JWT token in the Authorization header.
+
+### JWT Configuration
+
+Set up JWT secrets in your environment files:
+
+```bash
+# .env.development or .env
+JWT_SECRET=your_secure_secret_generated_with_openssl_rand_-base64_32
+JWT_EXPIRES_IN=7d
+```
+
+**Generate a secure JWT_SECRET:**
+```bash
+openssl rand -base64 32
+```
+
+### Authentication Flow
+
+1. **Register**: User creates an account and receives JWT token automatically
+2. **Login**: User provides credentials and receives JWT token
+3. **Protected Requests**: Include token in `Authorization` header to access protected endpoints
+4. **Token Expiry**: Tokens expire after `JWT_EXPIRES_IN` duration (default: 7 days)
+
+### Sending Authenticated Requests
+
+Include the JWT token in the Authorization header:
+
+```
+Authorization: Bearer <your_jwt_token>
+```
+
+**Example with cURL:**
+```bash
+curl http://localhost:3000/api/users \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+
+**Example with JavaScript/Fetch:**
+```javascript
+const response = await fetch('http://localhost:3000/api/users', {
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  }
+});
+```
+
+**Example with Axios:**
+```javascript
+axios.get('http://localhost:3000/api/users', {
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+});
+```
+
 ## API Documentation
 
 For comprehensive API endpoint documentation including request/response examples, see [API_DOCS.md](./API_DOCS.md).
@@ -216,6 +277,93 @@ For comprehensive API endpoint documentation including request/response examples
 - **Users**: `/api/users` - User management (CRUD operations)
 - **Habits**: `/api/habits` - Habit tracking and completion
 - **Tags**: `/api/tags` - Tag management for organizing habits
+
+### Request Headers
+
+All requests should include:
+```
+Content-Type: application/json
+```
+
+For protected endpoints, also include:
+```
+Authorization: Bearer <JWT_TOKEN>
+```
+
+### Example Requests
+
+**Register a new user (Public)**
+```bash
+curl -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "username": "john_doe",
+    "password": "SecurePassword123",
+    "firstName": "John",
+    "lastName": "Doe"
+  }'
+```
+
+**Response:**
+```json
+{
+  "message": "User created successfully",
+  "user": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "email": "user@example.com",
+    "username": "john_doe",
+    "firstName": "John",
+    "lastName": "Doe",
+    "createdAt": "2026-04-28T10:30:00.000Z"
+  },
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Login (Public)**
+```bash
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "SecurePassword123"
+  }'
+```
+
+**Response:**
+```json
+{
+  "message": "Login successful",
+  "user": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "email": "user@example.com",
+    "username": "john_doe",
+    "firstName": "John",
+    "lastName": "Doe"
+  },
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Get all users (Protected)**
+```bash
+curl http://localhost:3000/api/users \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+
+**Create a habit (Protected)**
+```bash
+curl -X POST http://localhost:3000/api/habits \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Morning Exercise",
+    "description": "30 minutes of workout",
+    "frequency": "daily",
+    "target_count": 5
+  }'
+```
 
 ### Health Check
 ```
