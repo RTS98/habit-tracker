@@ -1,8 +1,15 @@
 import { Router } from "express";
-import { insertUserSchema, updateUserSchema, userIdSchema } from "../schemas/user.ts";
+import {
+  insertUserSchema,
+  updateUserSchema,
+  userIdSchema,
+} from "../schemas/user.ts";
 import { validateBody, validateParams } from "../middleware/validation.ts";
+import { authenticateToken } from "../middleware/auth.ts";
 
 const router = Router();
+
+router.use(authenticateToken);
 
 router.get("/", (req, res) => {
   res.json({ message: "Get all users" });
