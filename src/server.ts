@@ -6,6 +6,8 @@ import userRoutes from "./routes/userRoutes.ts";
 import habitRoutes from "./routes/habitRoutes.ts";
 import tagRoutes from "./routes/tagRoutes.ts";
 import env from "../env.ts";
+import { notFound } from "./middleware/notFound.ts";
+import { errorHandler } from "./middleware/errorHandler.ts";
 
 const app = express();
 
@@ -26,5 +28,11 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/habits", habitRoutes);
 app.use("/api/tags", tagRoutes);
+
+// 404 handler - MUST be before global error handler
+app.use(notFound);
+
+// Global error handler - MUST be last middleware
+app.use(errorHandler);
 
 export default app;

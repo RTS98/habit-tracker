@@ -101,7 +101,8 @@ Content-Type: application/json
 ```
 
 **Error Responses**
-- `500` - Failed to create user (e.g., duplicate email/username)
+- `400` - Validation failed (see [Validation Errors](#validation-errors-400))
+- `500` - Failed to create user (database error, e.g., duplicate email/username)
 
 **Example**
 ```bash
@@ -156,8 +157,9 @@ Content-Type: application/json
 ```
 
 **Error Responses**
-- `401` - Invalid credentials
-- `500` - Failed to login
+- `400` - Validation failed (invalid email format or missing password)
+- `401` - Invalid credentials (wrong email or password)
+- `500` - Failed to login (unexpected server error)
 
 **Example**
 ```bash
@@ -236,7 +238,7 @@ Authorization: Bearer <token>
 ```
 
 **Error Responses**
-- `401` - Unauthorized (invalid or missing token)
+- `401` - Access token required / Invalid or expired token (see [Authentication Errors](#authentication-errors))
 - `404` - User not found
 - `500` - Failed to fetch profile
 
@@ -285,8 +287,9 @@ Content-Type: application/json
 ```
 
 **Error Responses**
-- `401` - Unauthorized
-- `500` - Failed to update profile
+- `400` - Validation failed (invalid email/username format)
+- `401` - Access token required / Invalid or expired token
+- `500` - Failed to update profile (database error)
 
 **Example**
 ```bash
@@ -332,8 +335,8 @@ Content-Type: application/json
 ```
 
 **Error Responses**
-- `400` - Current password is incorrect
-- `401` - Unauthorized
+- `400` - Validation failed / Current password is incorrect
+- `401` - Access token required / Invalid or expired token
 - `404` - User not found
 - `500` - Failed to change password
 
@@ -447,8 +450,9 @@ Authorization: Bearer <token>
 ```
 
 **Error Responses**
-- `401` - Unauthorized
-- `404` - Habit not found
+- `400` - Invalid parameters (invalid UUID format)
+- `401` - Access token required / Invalid or expired token
+- `404` - Habit not found (doesn't exist or doesn't belong to user)
 - `500` - Failed to fetch habit
 
 **Example**
@@ -507,8 +511,9 @@ Content-Type: application/json
 ```
 
 **Error Responses**
-- `401` - Unauthorized
-- `500` - Failed to create habit
+- `400` - Validation failed (invalid frequency, name too long, etc.)
+- `401` - Access token required / Invalid or expired token
+- `500` - Failed to create habit (database error)
 
 **Example**
 ```bash
@@ -579,9 +584,10 @@ Content-Type: application/json
 ```
 
 **Error Responses**
-- `401` - Unauthorized
-- `404` - Habit not found
-- `500` - Failed to update habit
+- `400` - Invalid parameters / Validation failed
+- `401` - Access token required / Invalid or expired token
+- `404` - Habit not found (doesn't exist or doesn't belong to user)
+- `500` - Failed to update habit (database error)
 
 **Example**
 ```bash
@@ -618,8 +624,9 @@ Authorization: Bearer <token>
 ```
 
 **Error Responses**
-- `401` - Unauthorized
-- `404` - Habit not found
+- `400` - Invalid parameters (invalid UUID format)
+- `401` - Access token required / Invalid or expired token
+- `404` - Habit not found (doesn't exist or doesn't belong to user)
 - `500` - Failed to delete habit
 
 **Example**
@@ -752,7 +759,8 @@ Authorization: Bearer <token>
 ```
 
 **Error Responses**
-- `401` - Unauthorized
+- `400` - Invalid parameters (invalid UUID format)
+- `401` - Access token required / Invalid or expired token
 - `404` - Tag not found
 - `500` - Failed to fetch tag
 
@@ -802,9 +810,10 @@ Content-Type: application/json
 ```
 
 **Error Responses**
-- `401` - Unauthorized
+- `400` - Validation failed (invalid name/color format)
+- `401` - Access token required / Invalid or expired token
 - `409` - Tag with this name already exists
-- `500` - Failed to create tag
+- `500` - Failed to create tag (database error)
 
 **Example**
 ```bash
@@ -862,10 +871,11 @@ Content-Type: application/json
 ```
 
 **Error Responses**
-- `401` - Unauthorized
+- `400` - Invalid parameters / Validation failed
+- `401` - Access token required / Invalid or expired token
 - `404` - Tag not found
-- `409` - Tag with this name already exists
-- `500` - Failed to update tag
+- `409` - Tag with this name already exists (when updating name)
+- `500` - Failed to update tag (database error)
 
 **Example**
 ```bash
@@ -902,7 +912,8 @@ Authorization: Bearer <token>
 ```
 
 **Error Responses**
-- `401` - Unauthorized
+- `400` - Invalid parameters (invalid UUID format)
+- `401` - Access token required / Invalid or expired token
 - `404` - Tag not found
 - `500` - Failed to delete tag
 
@@ -916,8 +927,27 @@ curl -X DELETE http://localhost:3000/api/tags/123e4567-e89b-12d3-a456-4266141740
 
 ## Error Handling
 
-### Validation Errors
-When request validation fails (invalid request body or parameters):
+The API uses standard HTTP status codes to indicate the success or failure of requests. All error responses include an `error` field with a descriptive message.
+
+### HTTP Status Codes
+
+| Code | Description |
+|------|-------------|
+| `200` | Success - Request completed successfully |
+| `201` | Created - Resource created successfully |
+| `400` | Bad Request - Invalid request data or parameters |
+| `401` | Unauthorized - Missing or invalid authentication token |
+| `403` | Forbidden - Token is invalid or expired |
+| `404` | Not Found - Requested resource doesn't exist |
+| `409` | Conflict - Resource already exists (duplicate) |
+| `500` | Internal Server Error - Unexpected server error |
+
+---
+
+### Validation Errors (400)
+
+#### Body Validation Failure
+When request body validation fails (via Zod schema):
 
 **Response (400 Bad Request)**
 ```json
@@ -925,29 +955,107 @@ When request validation fails (invalid request body or parameters):
   "error": "Validation failed",
   "details": [
     {
-      "path": ["email"],
+      "field": "email",
       "message": "Invalid email format"
     },
     {
-      "path": ["password"],
+      "field": "password",
       "message": "Password must be at least 8 characters"
     }
   ]
 }
 ```
 
+#### Parameter Validation Failure
+When URL parameter validation fails:
+
+**Response (400 Bad Request)**
+```json
+{
+  "error": "Invalid parameters",
+  "details": [
+    {
+      "field": "id",
+      "message": "Invalid habit ID format"
+    }
+  ]
+}
+```
+
+#### Query Parameter Validation Failure
+When query parameter validation fails:
+
+**Response (400 Bad Request)**
+```json
+{
+  "error": "Invalid query parameters",
+  "details": [
+    {
+      "field": "limit",
+      "message": "Expected number, received string"
+    }
+  ]
+}
+```
+
+#### Common Validation Messages
+- `"Invalid email format"` - Email doesn't match required format
+- `"Password must be at least 8 characters"` - Password too short
+- `"Password must contain uppercase, lowercase, and number"` - Password doesn't meet complexity requirements
+- `"Username must be at least 3 characters"` - Username too short
+- `"Habit name is required"` - Required field missing
+- `"Frequency must be one of: daily, weekly, monthly"` - Invalid enum value
+- `"Invalid habit ID format"` - UUID format validation failed
+- `"Color must be a valid hex color"` - Color format invalid (must be `#RRGGBB`)
+
+---
+
 ### Authentication Errors
-When authentication fails or token is invalid:
+
+#### Missing Token (401)
+When no authentication token is provided:
 
 **Response (401 Unauthorized)**
 ```json
 {
-  "error": "Unauthorized",
-  "message": "Invalid or missing token"
+  "error": "Access token required"
 }
 ```
 
-### Not Found
+#### Invalid or Expired Token (403)
+When the provided token is invalid or has expired:
+
+**Response (403 Forbidden)**
+```json
+{
+  "error": "Invalid or expired token"
+}
+```
+
+#### Invalid Credentials (401)
+When login credentials are incorrect:
+
+**Response (401 Unauthorized)**
+```json
+{
+  "error": "Invalid credentials"
+}
+```
+
+#### Incorrect Password (400)
+When changing password with incorrect current password:
+
+**Response (400 Bad Request)**
+```json
+{
+  "error": "Current password is incorrect"
+}
+```
+
+---
+
+### Not Found Errors (404)
+
 When a requested resource doesn't exist:
 
 **Response (404 Not Found)**
@@ -957,8 +1065,16 @@ When a requested resource doesn't exist:
 }
 ```
 
-### Conflict Errors
-When trying to create a duplicate resource (e.g., duplicate email, username, or tag name):
+**Possible Error Messages:**
+- `"Habit not found"` - Habit ID doesn't exist or doesn't belong to user
+- `"Tag not found"` - Tag ID doesn't exist
+- `"User not found"` - User ID doesn't exist
+
+---
+
+### Conflict Errors (409)
+
+When trying to create a duplicate resource:
 
 **Response (409 Conflict)**
 ```json
@@ -967,8 +1083,15 @@ When trying to create a duplicate resource (e.g., duplicate email, username, or 
 }
 ```
 
-### Server Errors
-When an unexpected error occurs:
+**Possible Error Messages:**
+- `"Tag with this name already exists"` - Attempting to create tag with duplicate name
+- Database constraint violations (e.g., duplicate email, username)
+
+---
+
+### Server Errors (500)
+
+When an unexpected server error occurs:
 
 **Response (500 Internal Server Error)**
 ```json
@@ -976,6 +1099,34 @@ When an unexpected error occurs:
   "error": "Failed to create habit"
 }
 ```
+
+**In Development Mode Only:**
+Additional debugging information is included:
+```json
+{
+  "error": "Failed to create habit",
+  "stack": "Error: Failed to create habit\n    at ...",
+  "details": "Detailed error message"
+}
+```
+
+**Common Error Messages:**
+- `"Failed to create user"` - Error during user registration
+- `"Failed to login"` - Error during authentication
+- `"Failed to fetch profile"` - Error retrieving user profile
+- `"Failed to update profile"` - Error updating user profile
+- `"Failed to change password"` - Error changing password
+- `"Failed to create habit"` - Error creating habit
+- `"Failed to fetch habits"` - Error retrieving habits
+- `"Failed to fetch habit"` - Error retrieving single habit
+- `"Failed to update habit"` - Error updating habit
+- `"Failed to delete habit"` - Error deleting habit
+- `"Failed to create tag"` - Error creating tag
+- `"Failed to fetch tags"` - Error retrieving tags
+- `"Failed to fetch tag"` - Error retrieving single tag
+- `"Failed to update tag"` - Error updating tag
+- `"Failed to delete tag"` - Error deleting tag
+- `"Failed to fetch popular tags"` - Error retrieving popular tags
 
 ---
 
