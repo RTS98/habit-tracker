@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Habit tracker API built with Node.js, Express, and PostgreSQL",
   "main": "src/index.ts",
+  "engines": {
+    "node": ">=22.14.0"
+  },
   "scripts": {
     "build": "tsc --outDir dist",
     "dev": "NODE_ENV=development tsx --watch src/index.ts",
