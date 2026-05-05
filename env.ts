@@ -19,7 +19,7 @@ const envSchema = z.object({
   JWT_SECRET: z
     .string()
     .min(32, "JWT_SECRET must be at least 32 characters long")
-    .default("your_jwt_secret_key"),
+    .default("your_jwt_secret_key_must_be_at_least_32_characters_long"),
   JWT_EXPIRES_IN: z.string().default("7d"),
 });
 
