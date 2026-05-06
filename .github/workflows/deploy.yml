@@ -1,0 +1,39 @@
+name: Test and Deploy
+on:
+    push:
+        branches:
+            - main
+jobs:
+    test:
+        name: Run Tests
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  cache: "npm"
+            - name: Install dependencies
+              run: npm ci
+            - name: Run tests
+              run: npm test
+    deploy:
+        name: Deploy
+        runs-on: ubuntu-latest
+        needs: test
+        steps:
+            - name: Deploy to Server
+              uses: appleboy/ssh-action@v1.2.5
+              with:
+                  host: ${{ secrets.SSH_HOST }}
+                  username: ${{ secrets.SSH_USERNAME }}
+                  key: ${{ secrets.SSH_KEY }}
+                  script: |
+                    cd /var/www/habit-tracker
+                    git fetch origin
+                    git reset --hard origin/main
+                    npm ci
+                    npm run build
+                    npm run db:migrate
+                    pm2 restart habit-tracker
