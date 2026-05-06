@@ -9,6 +9,7 @@ export default defineConfig({
     // Ensure tests run sequentially to avoid database conflicts
     pool: "threads",
     globalSetup: "./src/tests/globalSetup.ts",
+    include: ["**/*.test.ts"],
   },
   plugins: [],
 });
