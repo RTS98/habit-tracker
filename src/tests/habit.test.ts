@@ -87,6 +87,10 @@ describe("Habits API", () => {
       const { user, token } = await createTestUser();
       const habit = await createTestHabit(user.id);
 
+      console.log("Created habit:", habit);
+      console.log(habit.id);
+      console.log("User ID:", user.id);
+
       const response = await request(app)
         .put(`/api/habits/${habit.id}`)
         .set("Authorization", `Bearer ${token}`)

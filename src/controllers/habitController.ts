@@ -1,8 +1,8 @@
 import type { Response } from "express";
 import type { AuthenticatedRequest } from "../middleware/auth.ts";
 import db from "../db/connection.ts";
-import { habits, entries, habitTags, tags } from "../db/schema.ts";
-import { eq, and, desc, inArray } from "drizzle-orm";
+import { habits, entries, habitTags } from "../db/schema.ts";
+import { eq, and, desc } from "drizzle-orm";
 
 export const createHabit = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -129,6 +129,9 @@ export const updateHabit = async (req: AuthenticatedRequest, res: Response) => {
     const { id } = req.params;
     const userId = req.user!.id;
     const { tagIds, ...updates } = req.body;
+
+    console.log("Updating habit with ID:", id);
+    console.log("User ID:", userId);
 
     const result = await db.transaction(async (tx) => {
       // Update the habit
