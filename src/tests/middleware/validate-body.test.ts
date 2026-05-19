@@ -1,8 +1,8 @@
 import type { NextFunction } from "express";
 import { validateBody } from "../../middleware/validation.ts";
-import { createUserSchema } from "../../schemas/user.ts";
+import { insertUserSchema } from "../../schemas/user.ts";
 
-const middleware = validateBody(createUserSchema);
+const middleware = validateBody(insertUserSchema);
 
 describe("validateBody middleware", () => {
   let req: any;
@@ -21,8 +21,8 @@ describe("validateBody middleware", () => {
   it("should validate request body against the schema", () => {
     req.body = {
       email: "test@email.com",
-      password: "password123",
-      name: "Test User",
+      password: "Password123",
+      username: "Test User",
     };
 
     middleware(req, res, next);
@@ -32,7 +32,7 @@ describe("validateBody middleware", () => {
   });
 
   it("should return 400 if validation fails", () => {
-    req.body = { name: "", email: "invalid-email", password: "short" };
+    req.body = { username: "", email: "invalid-email", password: "short" };
 
     middleware(req, res, next);
 
@@ -42,10 +42,17 @@ describe("validateBody middleware", () => {
       details: [
         { field: "email", message: "Invalid email format" },
         {
-          field: "password",
-          message: "Password must be at least 8  characters long",
+          field: "username",
+          message: "Username must be at least 3 characters",
         },
-        { field: "name", message: "Name is required" },
+        {
+          field: "password",
+          message: "Password must be at least 8 characters long",
+        },
+        {
+          field: "password",
+          message: "Password must contain uppercase, lowercase, and number",
+        },
       ],
     });
     expect(next).not.toHaveBeenCalled();

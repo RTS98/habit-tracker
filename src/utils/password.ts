@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 
 export const hashPassword = async (password: string): Promise<string> => {
-  return bcrypt.hash(password, process.env.BCRYPT_SALT_ROUNDS || "12");
+  return bcrypt.hash(password, Number(process.env.BCRYPT_SALT_ROUNDS) || 10);
 };
 
 export const comparePassword = async (

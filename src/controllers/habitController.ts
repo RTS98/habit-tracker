@@ -56,7 +56,7 @@ export const getUserHabits = async (
     const userHabitsWithTags = await db.query.habits.findMany({
       where: eq(habits.userId, userId),
       with: {
-        habitTags: {
+        tags: {
           with: {
             tag: true,
           },
@@ -68,7 +68,7 @@ export const getUserHabits = async (
     // Transform the data to include tags directly
     const habitsWithTags = userHabitsWithTags.map((habit) => ({
       ...habit,
-      tags: habit.habitTags.map((ht) => ht.tag),
+      tags: habit.tags.map((ht) => ht.tag),
       habitTags: undefined, // Remove intermediate relation
     }));
 

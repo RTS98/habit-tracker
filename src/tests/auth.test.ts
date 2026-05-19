@@ -1,23 +1,23 @@
 import request from "supertest";
 import app from "../server.ts";
 
-import { afterEach } from "vitest";
-import { createTestUser, cleanupDatabase } from "./helpers/dbHelpers.ts";
+import { cleanupDatabase } from "./helpers/dbHelpers.ts";
 
 describe("Authentication Endpoints", () => {
-  afterEach(async () => {
+  const userData = {
+    email: `test-endpoint@example.com`,
+    username: `testuser-endpoint-${Date.now()}`,
+    password: "TestPassword123!",
+    firstName: "Test",
+    lastName: "User",
+  };
+
+  afterAll(async () => {
     await cleanupDatabase();
   });
+
   describe("POST /api/auth/register", () => {
     it("should register a new user with valid data", async () => {
-      const userData = {
-        email: `test-${Date.now()}@example.com`,
-        username: `testuser-${Date.now()}`,
-        password: "TestPassword123!",
-        firstName: "Test",
-        lastName: "User",
-      };
-
       const response = await request(app)
         .post("/api/auth/register")
         .send(userData)
@@ -65,20 +65,9 @@ describe("Authentication Endpoints", () => {
 
   describe("POST /api/auth/login", () => {
     it("should login with valid credentials", async () => {
-      // Create a test user first
-      const { user, rawPassword } = await createTestUser({
-        email: `test-${Date.now()}@example.com`,
-        password: "TestPassword123!",
-      });
-
-      const credentials = {
-        email: user.email,
-        password: rawPassword,
-      };
-
       const response = await request(app)
         .post("/api/auth/login")
-        .send(credentials)
+        .send(userData)
         .expect(200);
 
       expect(response.body).toHaveProperty("message", "Login successful");
@@ -101,11 +90,8 @@ describe("Authentication Endpoints", () => {
     });
 
     it("should return 401 for invalid credentials", async () => {
-      // Create a test user first
-      const { user } = await createTestUser();
-
       const credentials = {
-        email: user.email,
+        email: `test-${Date.now()}-${Math.random()}@example.com`,
         password: "wrongpassword",
       };
 

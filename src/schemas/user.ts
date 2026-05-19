@@ -1,8 +1,19 @@
 import z from "zod";
-import { users } from "../db/schema.ts";
-import { createInsertSchema, createUpdateSchema } from "drizzle-zod";
 
-const insertUserSchema = createInsertSchema(users);
+const insertUserSchema = z.object({
+  email: z.email("Invalid email format"),
+  username: z
+    .string()
+    .min(3, "Username must be at least 3 characters")
+    .max(50, "Username too long"),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters long")
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+      "Password must contain uppercase, lowercase, and number",
+    ),
+});
 
 const updateUserSchema = z.object({
   email: z.email("Invalid email format").optional(),
@@ -19,7 +30,7 @@ const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, "Current password is required"),
   newPassword: z
     .string()
-    .min(8, "Password must be at least 8 characters")
+    .min(8, "Password must be at least 8 characters long")
     .regex(
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
       "Password must contain uppercase, lowercase, and number",
