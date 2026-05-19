@@ -44,9 +44,10 @@ export default async function setup() {
       await db.execute(sql`DROP TABLE IF EXISTS ${entries} CASCADE`);
       await db.execute(sql`DROP TABLE IF EXISTS ${habits} CASCADE`);
       await db.execute(sql`DROP TABLE IF EXISTS ${users} CASCADE`);
+      await db.execute(sql`DROP TABLE IF EXISTS ${tags} CASCADE`);
+      await db.execute(sql`DROP TABLE IF EXISTS ${habitTags} CASCADE`);
 
       console.log("✅ Test database teardown complete");
-      process.exit(0);
     } catch (error) {
       console.error("❌ Failed to teardown test database:", error);
     }
