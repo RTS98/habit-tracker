@@ -19,6 +19,9 @@ jobs:
               run: npm ci
             - name: Run tests
               run: npm test
+              env:
+                DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+                JWT_SECRET: ${{ secrets.JWT_SECRET }}
     deploy:
         name: Deploy
         runs-on: ubuntu-latest
