@@ -15,7 +15,6 @@ describe("Habits API", () => {
   describe("POST /api/habits", () => {
     it("should create a new habit", async () => {
       const { token } = await createTestUser();
-
       const response = await request(app)
         .post("/api/habits")
         .set("Authorization", `Bearer ${token}`)
@@ -86,11 +85,6 @@ describe("Habits API", () => {
     it("should update a habit", async () => {
       const { user, token } = await createTestUser();
       const habit = await createTestHabit(user.id);
-
-      console.log("Created habit:", habit);
-      console.log(habit.id);
-      console.log("User ID:", user.id);
-
       const response = await request(app)
         .put(`/api/habits/${habit.id}`)
         .set("Authorization", `Bearer ${token}`)

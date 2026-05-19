@@ -6,10 +6,11 @@ export default defineConfig({
     // Automatically clean up after each test to ensure isolation
     clearMocks: true,
     restoreMocks: true,
-    // Ensure tests run sequentially to avoid database conflicts
     pool: "threads",
     globalSetup: "./src/tests/globalSetup.ts",
     include: ["**/*.test.ts"],
+    // Ensure tests run sequentially to avoid database conflicts
+    fileParallelism: false,
   },
   plugins: [],
 });
