@@ -86,13 +86,13 @@ export const getHabitById = async (
   res: Response,
 ) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const userId = req.user!.id;
 
     const habit = await db.query.habits.findFirst({
       where: and(eq(habits.id, id), eq(habits.userId, userId)),
       with: {
-        habitTags: {
+        tags: {
           with: {
             tag: true,
           },
@@ -111,7 +111,7 @@ export const getHabitById = async (
     // Transform the data
     const habitWithTags = {
       ...habit,
-      tags: habit.habitTags.map((ht) => ht.tag),
+      tags: habit.tags.map((ht) => ht.tag),
       habitTags: undefined,
     };
 
@@ -126,7 +126,7 @@ export const getHabitById = async (
 
 export const updateHabit = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const userId = req.user!.id;
     const { tagIds, ...updates } = req.body;
 
@@ -175,7 +175,7 @@ export const updateHabit = async (req: AuthenticatedRequest, res: Response) => {
 
 export const deleteHabit = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const userId = req.user!.id;
 
     const [deletedHabit] = await db
