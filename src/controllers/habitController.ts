@@ -1,16 +1,15 @@
 import type { Response } from "express";
 import type { AuthenticatedRequest } from "../middleware/auth.ts";
-import db from "../db/connection.ts";
 import { habits, entries, habitTags } from "../db/schema.ts";
 import { eq, and, desc } from "drizzle-orm";
+import { withUserContext } from "../db/userContext.ts";
 
 export const createHabit = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { name, description, frequency, targetCount, tagIds } = req.body;
     const userId = req.user!.id;
 
-    // Start a transaction for data consistency
-    const result = await db.transaction(async (tx) => {
+    const result = await withUserContext(userId, async (tx) => {
       // Create the habit
       const [newHabit] = await tx
         .insert(habits)
@@ -51,18 +50,19 @@ export const getUserHabits = async (
 ) => {
   try {
     const userId = req.user!.id;
-
     // Query habits with their tags using relations
-    const userHabitsWithTags = await db.query.habits.findMany({
-      where: eq(habits.userId, userId),
-      with: {
-        tags: {
-          with: {
-            tag: true,
+    const userHabitsWithTags = await withUserContext(userId, async (tx) => {
+      return tx.query.habits.findMany({
+        where: eq(habits.userId, userId),
+        with: {
+          tags: {
+            with: {
+              tag: true,
+            },
           },
         },
-      },
-      orderBy: [desc(habits.createdAt)],
+        orderBy: [desc(habits.createdAt)],
+      });
     });
 
     // Transform the data to include tags directly
@@ -88,20 +88,21 @@ export const getHabitById = async (
   try {
     const id = req.params.id as string;
     const userId = req.user!.id;
-
-    const habit = await db.query.habits.findFirst({
-      where: and(eq(habits.id, id), eq(habits.userId, userId)),
-      with: {
-        tags: {
-          with: {
-            tag: true,
+    const habit = await withUserContext(userId, async (tx) => {
+      return tx.query.habits.findFirst({
+        where: and(eq(habits.id, id), eq(habits.userId, userId)),
+        with: {
+          tags: {
+            with: {
+              tag: true,
+            },
+          },
+          entries: {
+            orderBy: [desc(entries.completion)],
+            limit: 10, // Recent entries only
           },
         },
-        entries: {
-          orderBy: [desc(entries.completion)],
-          limit: 10, // Recent entries only
-        },
-      },
+      });
     });
 
     if (!habit) {
@@ -129,8 +130,7 @@ export const updateHabit = async (req: AuthenticatedRequest, res: Response) => {
     const id = req.params.id as string;
     const userId = req.user!.id;
     const { tagIds, ...updates } = req.body;
-
-    const result = await db.transaction(async (tx) => {
+    const result = await withUserContext(userId, async (tx) => {
       // Update the habit
       const [updatedHabit] = await tx
         .update(habits)
@@ -177,11 +177,12 @@ export const deleteHabit = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = req.params.id as string;
     const userId = req.user!.id;
-
-    const [deletedHabit] = await db
-      .delete(habits)
-      .where(and(eq(habits.id, id), eq(habits.userId, userId)))
-      .returning();
+    const [deletedHabit] = await withUserContext(userId, async (tx) => {
+      return tx
+        .delete(habits)
+        .where(and(eq(habits.id, id), eq(habits.userId, userId)))
+        .returning();
+    });
 
     if (!deletedHabit) {
       return res.status(404).json({ error: "Habit not found" });
