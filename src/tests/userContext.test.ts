@@ -6,7 +6,7 @@ const { executeMock, transactionMock } = vi.hoisted(() => ({
   transactionMock: vi.fn(),
 }));
 
-vi.mock("../../db/connection.ts", () => ({
+vi.mock("../db/connection.ts", () => ({
   default: {
     transaction: transactionMock,
   },
