@@ -16,6 +16,9 @@ const envSchema = z.object({
   DATABASE_URL: z
     .url()
     .default("postgresql://user:password@localhost:5432/habit_tracker"),
+  AUTH_DATABASE_URL: z
+    .url()
+    .default("postgresql://user:password@localhost:5432/habit_tracker"),
   JWT_SECRET: z
     .string()
     .min(32, "JWT_SECRET must be at least 32 characters long")

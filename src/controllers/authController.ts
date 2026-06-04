@@ -1,16 +1,16 @@
 import type { Request, Response } from "express";
-import db from "../db/connection.ts";
 import { users } from "../db/schema.ts";
 import { comparePassword, hashPassword } from "../utils/password.ts";
 import { generateToken } from "../utils/jwt.ts";
 import { eq } from "drizzle-orm";
+import authDb from "../db/auth-connection.ts";
 
 export const register = async (req: Request, res: Response) => {
   try {
     const { email, username, password, firstName, lastName } = req.body;
 
     // Create user in database
-    const [newUser] = await db
+    const [newUser] = await authDb
       .insert(users)
       .values({
         email,
@@ -51,7 +51,10 @@ export const login = async (req: Request, res: Response) => {
     const { email, password } = req.body;
 
     // Step 1: Find user by email
-    const [user] = await db.select().from(users).where(eq(email, users.email));
+    const [user] = await authDb
+      .select()
+      .from(users)
+      .where(eq(email, users.email));
 
     if (!user) {
       return res.status(401).json({ error: "Invalid credentials" });
