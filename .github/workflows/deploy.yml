@@ -43,9 +43,8 @@ jobs:
             cd /var/www/habit-tracker
             git fetch origin
             git reset --hard origin/main
-            set -a && source ./.env && set +a
-            npm install
+            NODE_ENV=development npm ci
             npm run build
             npm run db:migrate
-            npm prune --production
+            npm prune --omit=dev
             pm2 restart habit-tracker --update-env
