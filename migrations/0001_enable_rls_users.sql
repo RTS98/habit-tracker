@@ -29,4 +29,3 @@ FOR DELETE
 USING (
   id = current_setting('app.current_user_id')::uuid
 );
-
