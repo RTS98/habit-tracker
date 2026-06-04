@@ -42,8 +42,8 @@ jobs:
             cd /var/www/habit-tracker
             git fetch origin
             git reset --hard origin/main
+            set -a && source ./.env && set +a
             npm ci
             npm run build
-            pm2 stop habit-tracker
             npm run db:migrate
             pm2 restart habit-tracker
