@@ -20,6 +20,7 @@ jobs:
       - name: Run tests
         run: npm test
         env:
+          AUTH_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
           DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
   deploy:
