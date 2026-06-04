@@ -46,6 +46,6 @@ jobs:
             set -a && source ./.env && set +a
             npm ci
             npm run build
-            npx --yes drizzle-kit migratete --config=drizzle.config.ts
+            npx --yes drizzle-kit migrate --config=drizzle.config.ts
             npm run db:migrate
             pm2 restart habit-tracker --update-env
