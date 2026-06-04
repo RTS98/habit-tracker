@@ -43,6 +43,7 @@ jobs:
             cd /var/www/habit-tracker
             git fetch origin
             git reset --hard origin/main
+            set -a && source /var/www/habit-tracker/.env && set +a
             NODE_ENV=development npm ci
             npm run build
             npm run db:migrate
