@@ -32,11 +32,12 @@ jobs:
         uses: appleboy/ssh-action@v1.2.5
         env:
           MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+          NODE_ENV: production
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
-          envs: MIGRATION_DATABASE_URL
+          envs: MIGRATION_DATABASE_URL, NODE_ENV
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           script: |
             cd /var/www/habit-tracker
