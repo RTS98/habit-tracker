@@ -30,6 +30,8 @@ jobs:
     steps:
       - name: Deploy to Server
         uses: appleboy/ssh-action@v1.2.5
+        env: 
+          MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}

@@ -6,7 +6,7 @@ export default defineConfig({
   schema: "./src/db/schema.ts",
   dialect: "postgresql",
   dbCredentials: {
-    url: env.DATABASE_URL,
+    url: process.env.MIGRATION_DATABASE_URL ?? env.DATABASE_URL,
   },
   migrations: {
     table: "migrations_table",
