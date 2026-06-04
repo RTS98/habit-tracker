@@ -17,4 +17,5 @@ export default defineConfig({
     table: "migrations_table",
     schema: "public",
   },
+  verbose: true,
 });
