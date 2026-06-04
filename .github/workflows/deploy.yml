@@ -40,7 +40,6 @@ jobs:
           envs: MIGRATION_DATABASE_URL, NODE_ENV
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           script: |
-            echo "URL set: $([ -n "$MIGRATION_DATABASE_URL" ] && echo yes || echo no)"
             cd /var/www/habit-tracker
             git fetch origin
             git reset --hard origin/main
