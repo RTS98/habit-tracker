@@ -44,13 +44,6 @@ jobs:
             git fetch origin
             git reset --hard origin/main
             set -a && source /var/www/habit-tracker/.env && set +a
-            node -e "
-              const { Client } = require('pg');
-              const client = new Client({ connectionString: process.env.MIGRATION_DATABASE_URL });
-              client.connect()
-                .then(() => { console.log('DB connected ✅'); return client.end(); })
-                .catch(err => console.error('DB connection failed ❌', err.message));
-            "
             NODE_ENV=development npm ci
             npm run build
             npm run db:migrate
