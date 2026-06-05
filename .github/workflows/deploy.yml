@@ -46,6 +46,6 @@ jobs:
             set -a && source /var/www/habit-tracker/.env && set +a
             NODE_ENV=development npm ci
             npm run build
-            npx drizzle-kit migrate --dialect=postgresql --url="$MIGRATION_DATABASE_URL"
+            npm run db:migrate
             npm prune --omit=dev
             pm2 restart habit-tracker --update-env

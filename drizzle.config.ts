@@ -10,7 +10,7 @@ export default defineConfig({
   out: "./migrations",
   schema: "./src/db/schema.ts",
   dialect: "postgresql",
-  dbCredentials: { url },
+  dbCredentials: { url, ssl: false },
   migrations: {
     table: "migrations_table",
     schema: "public",
