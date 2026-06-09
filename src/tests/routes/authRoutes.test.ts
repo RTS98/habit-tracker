@@ -1,11 +1,12 @@
 import request from "supertest";
 import app from "../../server.ts";
+
 import { cleanupDatabase } from "../helpers/dbHelpers.ts";
 
-describe("Auth routes", () => {
+describe("Authentication Routes", () => {
   const userData = {
-    email: `test-routeStatus@example.com`,
-    username: `testuser-routeStatus-${Date.now()}`,
+    email: `test-endpoint-${Date.now()}@example.com`,
+    username: `testuser-endpoint-${Date.now()}`,
     password: "TestPassword123!",
     firstName: "Test",
     lastName: "User",
@@ -15,23 +16,91 @@ describe("Auth routes", () => {
     await cleanupDatabase();
   });
 
-  it("should return 201 for register", async () => {
-    const response = await request(app)
-      .post("/api/auth/register")
-      .send(userData);
+  describe("POST /api/auth/register", () => {
+    it("should register a new user with valid data", async () => {
+      const response = await request(app)
+        .post("/api/auth/register")
+        .send(userData)
+        .expect(201);
 
-    expect(response.status).toBe(201);
+      expect(response.body).toHaveProperty(
+        "message",
+        "User created successfully",
+      );
+      expect(response.body).toHaveProperty("user");
+      expect(response.body).toHaveProperty("token");
+      expect(response.body.user).not.toHaveProperty("password");
+    });
+
+    it("should return 400 for invalid email", async () => {
+      const userData = {
+        email: "invalid-email",
+        username: `testuser-${Date.now()}`,
+        password: "TestPassword123!",
+      };
+
+      const response = await request(app)
+        .post("/api/auth/register")
+        .send(userData)
+        .expect(400);
+
+      expect(response.body).toHaveProperty("error", "Validation failed");
+    });
+
+    it("should return 400 for short password", async () => {
+      const userData = {
+        email: `test-${Date.now()}@example.com`,
+        username: `testuser-${Date.now()}`,
+        password: "short",
+      };
+
+      const response = await request(app)
+        .post("/api/auth/register")
+        .send(userData)
+        .expect(400);
+
+      expect(response.body).toHaveProperty("error", "Validation failed");
+    });
   });
 
-  it("should return 200 for login", async () => {
-    const response = await request(app).post("/api/auth/login").send(userData);
+  describe("POST /api/auth/login", () => {
+    it("should login with valid credentials", async () => {
+      const response = await request(app)
+        .post("/api/auth/login")
+        .send(userData)
+        .expect(200);
 
-    expect(response.status).toBe(200);
-  });
+      expect(response.body).toHaveProperty("message", "Login successful");
+      expect(response.body).toHaveProperty("user");
+      expect(response.body).toHaveProperty("token");
+      expect(response.body.user).not.toHaveProperty("password");
+    });
 
-  it("should return 200 for logout", async () => {
-    const response = await request(app).post("/api/auth/logout");
+    it("should return 400 for missing email", async () => {
+      const credentials = {
+        password: "TestPassword123!",
+      };
 
-    expect(response.status).toBe(200);
+      const response = await request(app)
+        .post("/api/auth/login")
+        .send(credentials)
+        .expect(400);
+
+      expect(response.body).toHaveProperty("error", "Validation failed");
+    });
+
+    it("should return 401 for invalid credentials", async () => {
+      const credentials = {
+        email: `test-${Date.now()}-${Math.random()}@example.com`,
+        password: "wrongpassword",
+      };
+
+      const response = await request(app)
+        .post("/api/auth/login")
+        .send(credentials)
+        .expect(401);
+
+      expect(response.body).toHaveProperty("error");
+    });
   });
 });
