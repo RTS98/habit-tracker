@@ -21,3 +21,4 @@ if (isProduction) {
 const authDb = drizzle(client, { schema });
 
 export default authDb;
+export { client as authClient };

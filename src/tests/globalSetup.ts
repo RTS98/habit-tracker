@@ -1,4 +1,4 @@
-import db from "../../src/db/connection.ts";
+import db, { client } from "../../src/db/connection.ts";
 import {
   users,
   habits,
@@ -8,6 +8,7 @@ import {
 } from "../../src/db/schema.ts";
 import { sql } from "drizzle-orm";
 import { execSync } from "child_process";
+import { authClient } from "../db/auth-connection.ts";
 
 export default async function setup() {
   console.log("🗄️  Setting up test database...");
@@ -47,6 +48,8 @@ export default async function setup() {
       await db.execute(sql`DROP TABLE IF EXISTS ${tags} CASCADE`);
       await db.execute(sql`DROP TABLE IF EXISTS ${habitTags} CASCADE`);
 
+      await client.end(); // Close database connection
+      await authClient.end(); // Close auth database connection
       console.log("✅ Test database teardown complete");
     } catch (error) {
       console.error("❌ Failed to teardown test database:", error);

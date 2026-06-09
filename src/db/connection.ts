@@ -21,3 +21,4 @@ if (isProduction) {
 const db = drizzle(client, { schema });
 
 export default db;
+export { client };
