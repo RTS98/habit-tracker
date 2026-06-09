@@ -52,12 +52,12 @@ export const getTags = async (req: Request, res: Response) => {
 
 export const getTagById = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     const tag = await db.query.tags.findFirst({
       where: eq(tags.id, id),
       with: {
-        habitTags: {
+        habits: {
           with: {
             habit: {
               columns: {
@@ -79,8 +79,7 @@ export const getTagById = async (req: Request, res: Response) => {
     // Transform the data
     const tagWithHabits = {
       ...tag,
-      habits: tag.habitTags.map((ht) => ht.habit),
-      habitTags: undefined,
+      habits: tag.habits.map((ht) => ht.habit),
     };
 
     res.json({
@@ -94,7 +93,7 @@ export const getTagById = async (req: Request, res: Response) => {
 
 export const updateTag = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { name, color } = req.body;
 
     // If updating name, check if new name already exists
@@ -136,7 +135,7 @@ export const updateTag = async (req: AuthenticatedRequest, res: Response) => {
 
 export const deleteTag = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     const [deletedTag] = await db
       .delete(tags)
@@ -161,7 +160,7 @@ export const getPopularTags = async (req: Request, res: Response) => {
     // Get all tags with their usage count
     const tagsWithCount = await db.query.tags.findMany({
       with: {
-        habitTags: true,
+        habits: true,
       },
     });
 
@@ -171,7 +170,7 @@ export const getPopularTags = async (req: Request, res: Response) => {
         id: tag.id,
         name: tag.name,
         color: tag.color,
-        usageCount: tag.habitTags.length,
+        usageCount: tag.habits.length,
         createdAt: tag.createdAt,
         updatedAt: tag.updatedAt,
       }))
