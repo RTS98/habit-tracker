@@ -22,6 +22,13 @@
       "when": 1780558251624,
       "tag": "0002_create_service_role",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1781014633150,
+      "tag": "0003_add_roles_column",
+      "breakpoints": true
     }
   ]
 }
