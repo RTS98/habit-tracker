@@ -26,6 +26,7 @@ export async function createTestUser(
     .insert(users)
     .values({
       ...defaultData,
+      role: "admin",
       passwordHash: hashedPassword,
     })
     .returning();
@@ -34,6 +35,7 @@ export async function createTestUser(
     id: user.id,
     email: user.email,
     username: user.username,
+    role: "admin",
   });
 
   return { user, token, rawPassword: defaultData.password };

@@ -6,6 +6,7 @@ export interface JwtPayload extends JWTPayload {
   id: string;
   email: string;
   username: string;
+  role: "user" | "admin";
 }
 
 export const generateToken = (payload: JwtPayload): Promise<string> => {
@@ -27,5 +28,6 @@ export const verifyToken = async (token: string): Promise<JwtPayload> => {
     id: payload.id as string,
     email: payload.email as string,
     username: payload.username as string,
+    role: payload.role as "user" | "admin",
   };
 };

@@ -1,6 +1,5 @@
 import type { Response } from "express";
 import type { AuthenticatedRequest } from "../middleware/auth.ts";
-import db from "../db/connection.ts";
 import { users } from "../db/schema.ts";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcrypt";
@@ -8,17 +7,20 @@ import { withUserContext } from "../db/userContext.ts";
 
 export const getAllUsers = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const allUsers = await db
-      .select({
-        id: users.id,
-        email: users.email,
-        username: users.username,
-        firstName: users.firstName,
-        lastName: users.lastName,
-        createdAt: users.createdAt,
-        updatedAt: users.updatedAt,
-      })
-      .from(users);
+    const { id } = req.user!;
+    const allUsers = await withUserContext(id, async (tx) =>
+      tx
+        .select({
+          id: users.id,
+          email: users.email,
+          username: users.username,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          createdAt: users.createdAt,
+          updatedAt: users.updatedAt,
+        })
+        .from(users),
+    );
 
     res.json({ users: allUsers });
   } catch (error) {
@@ -30,19 +32,22 @@ export const getAllUsers = async (req: AuthenticatedRequest, res: Response) => {
 export const getProfile = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.params.id as string;
+    const { id } = req.user!;
 
-    const [user] = await db
-      .select({
-        id: users.id,
-        email: users.email,
-        username: users.username,
-        firstName: users.firstName,
-        lastName: users.lastName,
-        createdAt: users.createdAt,
-        updatedAt: users.updatedAt,
-      })
-      .from(users)
-      .where(eq(users.id, userId));
+    const [user] = await withUserContext(id, async (tx) =>
+      tx
+        .select({
+          id: users.id,
+          email: users.email,
+          username: users.username,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          createdAt: users.createdAt,
+          updatedAt: users.updatedAt,
+        })
+        .from(users)
+        .where(eq(users.id, userId)),
+    );
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });

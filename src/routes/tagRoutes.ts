@@ -14,21 +14,38 @@ import {
   updateTagSchema,
   uuidSchema,
 } from "../schemas/tags.ts";
+import validatePermissions from "../middleware/permissions.ts";
 
 const router = Router();
 router.use(authenticateToken);
 
 // CRUD Routes
-router.get("/", getTags);
-router.get("/popular", getPopularTags);
-router.get("/:id", validateParams(uuidSchema), getTagById);
-router.post("/", validateBody(createTagSchema), createTag);
+router.get("/", validatePermissions("tags:read"), getTags);
+router.get("/popular", validatePermissions("tags:read"), getPopularTags);
+router.get(
+  "/:id",
+  validateParams(uuidSchema),
+  validatePermissions("tags:read"),
+  getTagById,
+);
+router.post(
+  "/",
+  validateBody(createTagSchema),
+  validatePermissions("tags:create"),
+  createTag,
+);
 router.put(
   "/:id",
   validateParams(uuidSchema),
   validateBody(updateTagSchema),
+  validatePermissions("tags:update"),
   updateTag,
 );
-router.delete("/:id", validateParams(uuidSchema), deleteTag);
+router.delete(
+  "/:id",
+  validateParams(uuidSchema),
+  validatePermissions("tags:delete"),
+  deleteTag,
+);
 
 export default router;

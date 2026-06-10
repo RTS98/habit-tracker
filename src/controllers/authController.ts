@@ -33,6 +33,7 @@ export const register = async (req: Request, res: Response) => {
       id: newUser.id,
       email: newUser.email,
       username: newUser.username,
+      role: "user", // Default role for new users
     });
 
     res.status(201).json({
@@ -72,6 +73,7 @@ export const login = async (req: Request, res: Response) => {
       id: user.id,
       email: user.email,
       username: user.username,
+      role: user.role,
     });
 
     // Step 4: Return user data and token
@@ -83,6 +85,7 @@ export const login = async (req: Request, res: Response) => {
         username: user.username,
         firstName: user.firstName,
         lastName: user.lastName,
+        role: user.role,
       },
       token,
     });
