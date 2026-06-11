@@ -29,6 +29,13 @@
       "when": 1781014633150,
       "tag": "0003_add_roles_column",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1781192996443,
+      "tag": "0004_enable_rls_tags",
+      "breakpoints": true
     }
   ]
 }
