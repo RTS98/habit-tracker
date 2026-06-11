@@ -3,10 +3,12 @@ import type { AuthenticatedRequest } from "../middleware/auth.ts";
 import db from "../db/connection.ts";
 import { tags } from "../db/schema.ts";
 import { eq } from "drizzle-orm";
+import { withUserContext } from "../db/userContext.ts";
 
 export const createTag = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { name, color } = req.body;
+    const userId = req.user!.id;
 
     // Check if tag with same name already exists
     const existingTag = await db.query.tags.findFirst({
@@ -19,13 +21,15 @@ export const createTag = async (req: AuthenticatedRequest, res: Response) => {
         .json({ error: "Tag with this name already exists" });
     }
 
-    const [newTag] = await db
-      .insert(tags)
-      .values({
-        name,
-        color: color || "#6B7280", // Default gray color
-      })
-      .returning();
+    const [newTag] = await withUserContext(userId, async (tx) => {
+      return tx
+        .insert(tags)
+        .values({
+          name,
+          color: color || "#6B7280", // Default gray color
+        })
+        .returning();
+    });
 
     res.status(201).json({
       message: "Tag created successfully",
@@ -95,6 +99,7 @@ export const updateTag = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = req.params.id as string;
     const { name, color } = req.body;
+    const userId = req.user!.id;
 
     // If updating name, check if new name already exists
     if (name) {
@@ -109,15 +114,17 @@ export const updateTag = async (req: AuthenticatedRequest, res: Response) => {
       }
     }
 
-    const [updatedTag] = await db
-      .update(tags)
-      .set({
-        ...(name && { name }),
-        ...(color && { color }),
-        updatedAt: new Date(),
-      })
-      .where(eq(tags.id, id))
-      .returning();
+    const [updatedTag] = await withUserContext(userId, async (tx) => {
+      return tx
+        .update(tags)
+        .set({
+          ...(name && { name }),
+          ...(color && { color }),
+          updatedAt: new Date(),
+        })
+        .where(eq(tags.id, id))
+        .returning();
+    });
 
     if (!updatedTag) {
       return res.status(404).json({ error: "Tag not found" });
@@ -136,11 +143,11 @@ export const updateTag = async (req: AuthenticatedRequest, res: Response) => {
 export const deleteTag = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = req.params.id as string;
+    const userId = req.user!.id;
 
-    const [deletedTag] = await db
-      .delete(tags)
-      .where(eq(tags.id, id))
-      .returning();
+    const [deletedTag] = await withUserContext(userId, async (tx) => {
+      return tx.delete(tags).where(eq(tags.id, id)).returning();
+    });
 
     if (!deletedTag) {
       return res.status(404).json({ error: "Tag not found" });
