@@ -1,5 +1,5 @@
 import db from "../../db/connection.ts";
-import { users, habits, entries } from "../../db/schema.ts";
+import { users, habits, entries, tags } from "../../db/schema.ts";
 import { hashPassword } from "../../utils/password.ts";
 import { generateToken } from "../../utils/jwt.ts";
 
@@ -69,9 +69,32 @@ export async function createTestHabit(
   return habit;
 }
 
+export async function createTestTag(
+  tagData: Partial<{
+    name: string;
+    color: string;
+  }> = {},
+) {
+  const defaultData = {
+    name: `Test Tag ${Date.now()}`,
+    color: "#000000",
+    ...tagData,
+  };
+
+  const [tag] = await db
+    .insert(tags)
+    .values({
+      ...defaultData,
+    })
+    .returning();
+
+  return tag;
+}
+
 export async function cleanupDatabase() {
   // Clean up in the right order due to foreign key constraints
   await db.delete(entries);
   await db.delete(habits);
+  await db.delete(tags);
   await db.delete(users);
 }
