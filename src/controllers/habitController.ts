@@ -7,9 +7,9 @@ import { withUserContext } from "../db/userContext.ts";
 export const createHabit = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { name, description, frequency, targetCount, tagIds } = req.body;
-    const userId = req.user!.id;
+    const { id: userId, role } = req.user!;
 
-    const result = await withUserContext(userId, async (tx) => {
+    const result = await withUserContext(userId, role, async (tx) => {
       // Create the habit
       const [newHabit] = await tx
         .insert(habits)
@@ -49,21 +49,25 @@ export const getUserHabits = async (
   res: Response,
 ) => {
   try {
-    const userId = req.user!.id;
+    const { id: userId, role } = req.user!;
     // Query habits with their tags using relations
-    const userHabitsWithTags = await withUserContext(userId, async (tx) => {
-      return tx.query.habits.findMany({
-        where: eq(habits.userId, userId),
-        with: {
-          tags: {
-            with: {
-              tag: true,
+    const userHabitsWithTags = await withUserContext(
+      userId,
+      role,
+      async (tx) => {
+        return tx.query.habits.findMany({
+          where: eq(habits.userId, userId),
+          with: {
+            tags: {
+              with: {
+                tag: true,
+              },
             },
           },
-        },
-        orderBy: [desc(habits.createdAt)],
-      });
-    });
+          orderBy: [desc(habits.createdAt)],
+        });
+      },
+    );
 
     // Transform the data to include tags directly
     const habitsWithTags = userHabitsWithTags.map((habit) => ({
@@ -87,8 +91,8 @@ export const getHabitById = async (
 ) => {
   try {
     const id = req.params.id as string;
-    const userId = req.user!.id;
-    const habit = await withUserContext(userId, async (tx) => {
+    const { id: userId, role } = req.user!;
+    const habit = await withUserContext(userId, role, async (tx) => {
       return tx.query.habits.findFirst({
         where: and(eq(habits.id, id), eq(habits.userId, userId)),
         with: {
@@ -128,9 +132,9 @@ export const getHabitById = async (
 export const updateHabit = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = req.params.id as string;
-    const userId = req.user!.id;
+    const { id: userId, role } = req.user!;
     const { tagIds, ...updates } = req.body;
-    const result = await withUserContext(userId, async (tx) => {
+    const result = await withUserContext(userId, role, async (tx) => {
       // Update the habit
       const [updatedHabit] = await tx
         .update(habits)
@@ -176,8 +180,8 @@ export const updateHabit = async (req: AuthenticatedRequest, res: Response) => {
 export const deleteHabit = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = req.params.id as string;
-    const userId = req.user!.id;
-    const [deletedHabit] = await withUserContext(userId, async (tx) => {
+    const { id: userId, role } = req.user!;
+    const [deletedHabit] = await withUserContext(userId, role, async (tx) => {
       return tx
         .delete(habits)
         .where(and(eq(habits.id, id), eq(habits.userId, userId)))

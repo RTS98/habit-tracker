@@ -1,3 +1,5 @@
+-- ISSUE: Update RLS policies to respect RBAC will cause infinite recursion due to subqueries referencing the same policies. 
+
 -- HABITS: update policies to respect RBAC
 -- =============================================
 

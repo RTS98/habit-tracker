@@ -8,7 +8,7 @@ import { withUserContext } from "../db/userContext.ts";
 export const createTag = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { name, color } = req.body;
-    const userId = req.user!.id;
+    const { id: userId, role } = req.user!;
 
     // Check if tag with same name already exists
     const existingTag = await db.query.tags.findFirst({
@@ -21,7 +21,7 @@ export const createTag = async (req: AuthenticatedRequest, res: Response) => {
         .json({ error: "Tag with this name already exists" });
     }
 
-    const [newTag] = await withUserContext(userId, async (tx) => {
+    const [newTag] = await withUserContext(userId, role, async (tx) => {
       return tx
         .insert(tags)
         .values({
@@ -99,7 +99,7 @@ export const updateTag = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = req.params.id as string;
     const { name, color } = req.body;
-    const userId = req.user!.id;
+    const { id: userId, role } = req.user!;
 
     // If updating name, check if new name already exists
     if (name) {
@@ -114,7 +114,7 @@ export const updateTag = async (req: AuthenticatedRequest, res: Response) => {
       }
     }
 
-    const [updatedTag] = await withUserContext(userId, async (tx) => {
+    const [updatedTag] = await withUserContext(userId, role, async (tx) => {
       return tx
         .update(tags)
         .set({
@@ -143,9 +143,9 @@ export const updateTag = async (req: AuthenticatedRequest, res: Response) => {
 export const deleteTag = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = req.params.id as string;
-    const userId = req.user!.id;
+    const { id: userId, role } = req.user!;
 
-    const [deletedTag] = await withUserContext(userId, async (tx) => {
+    const [deletedTag] = await withUserContext(userId, role, async (tx) => {
       return tx.delete(tags).where(eq(tags.id, id)).returning();
     });
 

@@ -43,6 +43,13 @@
       "when": 1781522839739,
       "tag": "0005_update_rls_according_permissions",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1781611343474,
+      "tag": "0006_update_rls_with_role_context",
+      "breakpoints": true
     }
   ]
 }

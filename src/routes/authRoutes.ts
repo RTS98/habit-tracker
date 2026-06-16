@@ -1,7 +1,13 @@
 import Router from "express";
 import { validateBody } from "../middleware/validation.ts";
 import { insertUserSchema, loginSchema } from "../schemas/user.ts";
-import { login, register } from "../controllers/authController.ts";
+import {
+  login,
+  refreshToken,
+  register,
+} from "../controllers/authController.ts";
+import cookieParser from "cookie-parser";
+import { authenticateRefreshToken } from "../middleware/auth.ts";
 
 const router = Router();
 
@@ -13,8 +19,6 @@ router.post("/logout", (req, res) => {
   res.status(200).json({ message: "User logged out" });
 });
 
-router.post("/refresh", (req, res) => {
-  res.json({ message: "Token refreshed" });
-});
+router.post("/refresh", cookieParser(), authenticateRefreshToken, refreshToken);
 
 export default router;

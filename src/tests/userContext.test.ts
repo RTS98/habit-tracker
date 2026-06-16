@@ -29,7 +29,7 @@ describe("withUserContext", () => {
 
     const fn = vi.fn().mockResolvedValue("ok");
 
-    const result = await withUserContext("user-123", fn as any);
+    const result = await withUserContext("user-123", "admin", fn as any);
 
     expect(transactionMock).toHaveBeenCalledTimes(1);
     expect(executeMock).toHaveBeenCalledTimes(1);

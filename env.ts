@@ -19,9 +19,13 @@ const envSchema = z.object({
   AUTH_DATABASE_URL: z
     .url()
     .default("postgresql://user:password@localhost:5432/habit_tracker"),
-  JWT_SECRET: z
+  ACCESS_TOKEN_SECRET: z
     .string()
-    .min(32, "JWT_SECRET must be at least 32 characters long")
+    .min(32, "ACCESS_TOKEN_SECRET must be at least 32 characters long")
+    .default("your_jwt_secret_key_must_be_at_least_32_characters_long"),
+  REFRESH_TOKEN_SECRET: z
+    .string()
+    .min(32, "REFRESH_TOKEN_SECRET must be at least 32 characters long")
     .default("your_jwt_secret_key_must_be_at_least_32_characters_long"),
   JWT_EXPIRES_IN: z.string().default("7d"),
 });
