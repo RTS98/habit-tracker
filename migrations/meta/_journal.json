@@ -50,6 +50,13 @@
       "when": 1781611343474,
       "tag": "0006_update_rls_with_role_context",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1781708558060,
+      "tag": "0007_add_refresh_token_table",
+      "breakpoints": true
     }
   ]
 }

@@ -57,6 +57,20 @@ export const tags = pgTable("tags", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const refreshTokens = pgTable("refresh_tokens", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  tokenHash: varchar("token_hash", { length: 64 }).notNull().unique(),
+  familyId: uuid("family_id").notNull(),
+  issuedAt: timestamp("issued_at").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  rotatedAt: timestamp("rotated_at"),
+  revokedAt: timestamp("revoked_at"),
+  reusedAt: timestamp("reused_at"),
+});
+
 export const habitTags = pgTable("habit_tags", {
   id: uuid("id").primaryKey().defaultRandom(),
   habitId: uuid("habit_id")
