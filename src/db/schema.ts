@@ -64,7 +64,7 @@ export const refreshTokens = pgTable("refresh_tokens", {
     .references(() => users.id, { onDelete: "cascade" }),
   tokenHash: varchar("token_hash", { length: 64 }).notNull().unique(),
   familyId: uuid("family_id").notNull(),
-  issuedAt: timestamp("issued_at").notNull(),
+  issuedAt: timestamp("issued_at").defaultNow().notNull(),
   expiresAt: timestamp("expires_at").notNull(),
   rotatedAt: timestamp("rotated_at"),
   revokedAt: timestamp("revoked_at"),
