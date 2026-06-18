@@ -36,6 +36,7 @@ export const register = async (req: Request, res: Response) => {
         firstName: users.firstName,
         lastName: users.lastName,
         createdAt: users.createdAt,
+        role: users.role,
       });
 
     // Generate JWT for auto-login
@@ -46,11 +47,33 @@ export const register = async (req: Request, res: Response) => {
       role: "user", // Default role for new users
     });
 
-    res.status(201).json({
-      message: "User created successfully",
-      user: newUser,
-      token, // User is logged in immediately
+    const refreshToken = await generateRefreshToken({
+      id: newUser.id,
+      role: newUser.role,
     });
+
+    await withUserContext(newUser.id, newUser.role, async (tx) =>
+      tx.insert(refreshTokens).values({
+        userId: newUser.id,
+        tokenHash: hashToken(refreshToken),
+        familyId: crypto.randomUUID(),
+        expiresAt: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
+      }),
+    );
+
+    res
+      .status(201)
+      .cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 1 * 24 * 60 * 60 * 1000,
+      })
+      .json({
+        message: "User created successfully",
+        user: newUser,
+        token, // User is logged in immediately
+      });
   } catch (error) {
     console.error("Registration error:", error);
     res.status(500).json({ error: "Failed to create user" });
