@@ -64,6 +64,13 @@
       "when": 1781769123253,
       "tag": "0008_alter_issued_at_column",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1781855400000,
+      "tag": "0009_cron_delete_revoked_tokens",
+      "breakpoints": true
     }
   ]
 }
