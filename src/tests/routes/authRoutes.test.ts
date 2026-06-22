@@ -103,4 +103,80 @@ describe("Authentication Routes", () => {
       expect(response.body).toHaveProperty("error");
     });
   });
+
+  describe("POST /api/auth/refresh", () => {
+    const registerAndGetRefreshCookie = async (): Promise<string> => {
+      const newUser = {
+        email: `test-refresh-${Date.now()}-${Math.random()}@example.com`,
+        username: `testuser-refresh-${Date.now()}-${Math.random()}`,
+        password: "TestPassword123!",
+        firstName: "Refresh",
+        lastName: "User",
+      };
+
+      const response = await request(app)
+        .post("/api/auth/register")
+        .send(newUser)
+        .expect(201);
+
+      const cookies = response.headers["set-cookie"] as unknown as string[];
+      const refreshCookie = cookies.find((c) => c.startsWith("refreshToken="));
+
+      if (!refreshCookie) {
+        throw new Error("No refreshToken cookie set on register");
+      }
+
+      return refreshCookie;
+    };
+
+    it("should rotate the token and return a new access token", async () => {
+      const refreshCookie = await registerAndGetRefreshCookie();
+
+      const response = await request(app)
+        .post("/api/auth/refresh")
+        .set("Cookie", refreshCookie)
+        .expect(200);
+
+      expect(response.body).toHaveProperty("accessToken");
+
+      const cookies = response.headers["set-cookie"] as unknown as string[];
+      expect(cookies.some((c) => c.startsWith("refreshToken="))).toBe(true);
+    });
+
+    it("should return 401 when no refresh token cookie is sent", async () => {
+      const response = await request(app)
+        .post("/api/auth/refresh")
+        .expect(401);
+
+      expect(response.body).toHaveProperty("error", "Refresh token required");
+    });
+
+    it("should return 403 for a malformed refresh token", async () => {
+      const response = await request(app)
+        .post("/api/auth/refresh")
+        .set("Cookie", "refreshToken=not-a-valid-jwt")
+        .expect(403);
+
+      expect(response.body).toHaveProperty("error");
+    });
+
+    it("should detect reuse and reject a rotated token on second use", async () => {
+      const refreshCookie = await registerAndGetRefreshCookie();
+
+      await request(app)
+        .post("/api/auth/refresh")
+        .set("Cookie", refreshCookie)
+        .expect(200);
+
+      const response = await request(app)
+        .post("/api/auth/refresh")
+        .set("Cookie", refreshCookie)
+        .expect(401);
+
+      expect(response.body).toHaveProperty(
+        "error",
+        "Token reuse detected. Please login again.",
+      );
+    });
+  });
 });
