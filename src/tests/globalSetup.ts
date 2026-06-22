@@ -5,6 +5,7 @@ import {
   entries,
   tags,
   habitTags,
+  refreshTokens,
 } from "../../src/db/schema.ts";
 import { sql } from "drizzle-orm";
 import { execSync } from "child_process";
@@ -20,6 +21,7 @@ export default async function setup() {
     await db.execute(sql`DROP TABLE IF EXISTS ${users} CASCADE`);
     await db.execute(sql`DROP TABLE IF EXISTS ${tags} CASCADE`);
     await db.execute(sql`DROP TABLE IF EXISTS ${habitTags} CASCADE`);
+    await db.execute(sql`DROP TABLE IF EXISTS ${refreshTokens} CASCADE`);
 
     // Use drizzle-kit CLI to push schema to database
     console.log("🚀 Pushing schema using drizzle-kit...");
@@ -47,6 +49,7 @@ export default async function setup() {
       await db.execute(sql`DROP TABLE IF EXISTS ${users} CASCADE`);
       await db.execute(sql`DROP TABLE IF EXISTS ${tags} CASCADE`);
       await db.execute(sql`DROP TABLE IF EXISTS ${habitTags} CASCADE`);
+      await db.execute(sql`DROP TABLE IF EXISTS ${refreshTokens} CASCADE`);
 
       await client.end(); // Close database connection
       await authClient.end(); // Close auth database connection
