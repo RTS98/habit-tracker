@@ -3,9 +3,10 @@ import { refreshTokens, users } from "../db/schema.ts";
 import { comparePassword, hashPassword } from "../utils/password.ts";
 import { generateRefreshToken, generateToken } from "../utils/jwt.ts";
 import { eq } from "drizzle-orm";
-import authDb from "../db/auth-connection.ts";
+import authDb, { authClient } from "../db/auth-connection.ts";
 import type { RefreshTokenRequest } from "../middleware/auth.ts";
 import { withUserContext } from "../db/userContext.ts";
+import { withCancellation } from "../db/withCancellation.ts";
 import { hashToken } from "../utils/token.ts";
 import { AuthenticationError } from "../errors/errors.ts";
 
@@ -20,24 +21,27 @@ export const register = async (req: Request, res: Response) => {
     const { email, username, password, firstName, lastName } = req.body;
 
     // Create user in database
-    const [newUser] = await authDb
-      .insert(users)
-      .values({
-        email,
-        username,
-        passwordHash: await hashPassword(password), // Store hash, not plain text!
-        firstName,
-        lastName,
-      })
-      .returning({
-        id: users.id,
-        email: users.email,
-        username: users.username,
-        firstName: users.firstName,
-        lastName: users.lastName,
-        createdAt: users.createdAt,
-        role: users.role,
-      });
+    const passwordHash = await hashPassword(password); // Store hash, not plain text!
+    const [newUser] = await withCancellation(authDb, authClient, (tx) =>
+      tx
+        .insert(users)
+        .values({
+          email,
+          username,
+          passwordHash,
+          firstName,
+          lastName,
+        })
+        .returning({
+          id: users.id,
+          email: users.email,
+          username: users.username,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          createdAt: users.createdAt,
+          role: users.role,
+        }),
+    );
 
     // Generate JWT for auto-login
     const token = await generateToken({
@@ -85,10 +89,9 @@ export const login = async (req: Request, res: Response) => {
     const { email, password } = req.body;
 
     // Step 1: Find user by email
-    const [user] = await authDb
-      .select()
-      .from(users)
-      .where(eq(email, users.email));
+    const [user] = await withCancellation(authDb, authClient, (tx) =>
+      tx.select().from(users).where(eq(email, users.email)),
+    );
 
     if (!user) {
       return res.status(401).json({ error: "Invalid credentials" });

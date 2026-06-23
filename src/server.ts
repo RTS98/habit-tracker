@@ -8,6 +8,7 @@ import tagRoutes from "./routes/tagRoutes.ts";
 import env from "../env.ts";
 import { notFound } from "./middleware/notFound.ts";
 import { errorHandler } from "./middleware/errorHandler.ts";
+import { timeout } from "./middleware/timeout.ts";
 
 const app = express();
 
@@ -15,6 +16,9 @@ app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
+
+// Default 5s timeout for all requests; override per route with timeout(ms).
+app.use(timeout());
 
 app.get("/health", (req: Request, res: Response) => {
   res.status(200).json({
