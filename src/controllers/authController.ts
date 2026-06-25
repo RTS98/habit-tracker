@@ -79,7 +79,7 @@ export const register = async (req: Request, res: Response) => {
         token, // User is logged in immediately
       });
   } catch (error) {
-    console.error("Registration error:", error);
+    req.log.error({ err: error }, "Failed to register user");
     res.status(500).json({ error: "Failed to create user" });
   }
 };
@@ -94,6 +94,7 @@ export const login = async (req: Request, res: Response) => {
     );
 
     if (!user) {
+      req.log.warn({ email }, "Invalid login attempt");
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
@@ -101,6 +102,7 @@ export const login = async (req: Request, res: Response) => {
     const isValidPassword = await comparePassword(password, user.passwordHash);
 
     if (!isValidPassword) {
+      req.log.warn({ email }, "Invalid login attempt");
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
@@ -147,7 +149,7 @@ export const login = async (req: Request, res: Response) => {
         token,
       });
   } catch (error) {
-    console.error("Login error:", error);
+    req.log.error({ err: error }, "Failed to login user");
     res.status(500).json({ error: "Failed to login" });
   }
 };
@@ -172,6 +174,7 @@ export const refreshToken = async (req: RefreshTokenRequest, res: Response) => {
           .where(eq(refreshTokens.tokenHash, refreshTokenHash));
 
         if (!existingToken) {
+          req.log.warn({ refreshToken }, "Invalid or expired refresh token");
           throw new AuthenticationError("Invalid or expired refresh token");
         }
 
@@ -203,6 +206,7 @@ export const refreshToken = async (req: RefreshTokenRequest, res: Response) => {
           .where(eq(users.id, id));
 
         if (!user) {
+          req.log.warn({ id }, "User not found during token refresh");
           throw new AuthenticationError("User not found");
         }
 
@@ -226,6 +230,7 @@ export const refreshToken = async (req: RefreshTokenRequest, res: Response) => {
     );
 
     if (result.isReused) {
+      req.log.warn({ id }, "Token reuse detected during refresh");
       throw new AuthenticationError(
         "Token reuse detected. Please login again.",
       );
@@ -240,12 +245,12 @@ export const refreshToken = async (req: RefreshTokenRequest, res: Response) => {
       })
       .json({ accessToken: result.newAccessToken });
   } catch (error) {
-    console.error("Refresh token error:", error);
-
     if (error instanceof AuthenticationError) {
+      req.log.warn({ err: error }, "Authentication error during token refresh");
       return res.status(401).json({ error: error.message });
     }
 
+    req.log.error({ err: error }, "Failed to refresh token");
     res.status(500).json({ error: "Failed to refresh token" });
   }
 };

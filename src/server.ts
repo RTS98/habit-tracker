@@ -9,6 +9,9 @@ import env from "../env.ts";
 import { notFound } from "./middleware/notFound.ts";
 import { errorHandler } from "./middleware/errorHandler.ts";
 import { timeout } from "./middleware/timeout.ts";
+import { pinoHttp } from "pino-http";
+import { randomUUID } from "crypto";
+import { client } from "./db/connection.ts";
 
 const app = express();
 
@@ -16,6 +19,22 @@ app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
+app.use(
+  pinoHttp({
+    genReqId: (req, res) => {
+      const incoming = req.headers["x-request-id"];
+      const id = incoming || randomUUID();
+      res.setHeader("x-request-id", id);
+
+      return id;
+    },
+    customLogLevel: (req, res, err) => {
+      if (res.statusCode >= 500 || err) return "error";
+      if (res.statusCode >= 400) return "warn";
+      return "info";
+    },
+  }),
+);
 
 // Default 5s timeout for all requests; override per route with timeout(ms).
 app.use(timeout());
@@ -26,6 +45,16 @@ app.get("/health", (req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
     service: "Habit tracker API",
   });
+});
+
+app.get("/health/ready", async (req, res) => {
+  try {
+    await client.query("SELECT 1");
+    res.status(200).json({ status: "ready" });
+  } catch (err) {
+    req.log.error({ err }, "readiness check failed");
+    res.status(503).json({ status: "not_ready" });
+  }
 });
 
 app.use("/api/auth", authRoutes);

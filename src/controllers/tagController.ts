@@ -6,16 +6,17 @@ import { eq } from "drizzle-orm";
 import { withUserContext } from "../db/userContext.ts";
 
 export const createTag = async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { name, color } = req.body;
-    const { id: userId, role } = req.user!;
+  const { name, color } = req.body;
+  const { id: userId, role } = req.user!;
 
+  try {
     // Check if tag with same name already exists
     const existingTag = await db.query.tags.findFirst({
       where: eq(tags.name, name),
     });
 
     if (existingTag) {
+      req.log.warn({ name }, "Attempt to create duplicate tag");
       return res
         .status(409)
         .json({ error: "Tag with this name already exists" });
@@ -36,7 +37,7 @@ export const createTag = async (req: AuthenticatedRequest, res: Response) => {
       tag: newTag,
     });
   } catch (error) {
-    console.error("Create tag error:", error);
+    req.log.error({ err: error, userId }, "Failed to create tag");
     res.status(500).json({ error: "Failed to create tag" });
   }
 };
@@ -49,15 +50,15 @@ export const getTags = async (req: Request, res: Response) => {
       tags: allTags,
     });
   } catch (error) {
-    console.error("Get tags error:", error);
+    req.log.error({ err: error }, "Failed to fetch tags");
     res.status(500).json({ error: "Failed to fetch tags" });
   }
 };
 
 export const getTagById = async (req: Request, res: Response) => {
-  try {
-    const id = req.params.id as string;
+  const id = req.params.id as string;
 
+  try {
     const tag = await db.query.tags.findFirst({
       where: eq(tags.id, id),
       with: {
@@ -77,6 +78,7 @@ export const getTagById = async (req: Request, res: Response) => {
     });
 
     if (!tag) {
+      req.log.warn({ tagId: id }, "Tag not found");
       return res.status(404).json({ error: "Tag not found" });
     }
 
@@ -90,17 +92,17 @@ export const getTagById = async (req: Request, res: Response) => {
       tag: tagWithHabits,
     });
   } catch (error) {
-    console.error("Get tag error:", error);
+    req.log.error({ err: error, tagId: id }, "Failed to fetch tag");
     res.status(500).json({ error: "Failed to fetch tag" });
   }
 };
 
 export const updateTag = async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const id = req.params.id as string;
-    const { name, color } = req.body;
-    const { id: userId, role } = req.user!;
+  const id = req.params.id as string;
+  const { name, color } = req.body;
+  const { id: userId, role } = req.user!;
 
+  try {
     // If updating name, check if new name already exists
     if (name) {
       const existingTag = await db.query.tags.findFirst({
@@ -108,6 +110,7 @@ export const updateTag = async (req: AuthenticatedRequest, res: Response) => {
       });
 
       if (existingTag && existingTag.id !== id) {
+        req.log.warn({ name }, "Attempt to update tag to duplicate name");
         return res
           .status(409)
           .json({ error: "Tag with this name already exists" });
@@ -127,6 +130,7 @@ export const updateTag = async (req: AuthenticatedRequest, res: Response) => {
     });
 
     if (!updatedTag) {
+      req.log.warn({ tagId: id }, "Attempt to update non-existent tag");
       return res.status(404).json({ error: "Tag not found" });
     }
 
@@ -135,21 +139,22 @@ export const updateTag = async (req: AuthenticatedRequest, res: Response) => {
       tag: updatedTag,
     });
   } catch (error) {
-    console.error("Update tag error:", error);
+    req.log.error({ err: error, tagId: id }, "Failed to update tag");
     res.status(500).json({ error: "Failed to update tag" });
   }
 };
 
 export const deleteTag = async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const id = req.params.id as string;
-    const { id: userId, role } = req.user!;
+  const id = req.params.id as string;
+  const { id: userId, role } = req.user!;
 
+  try {
     const [deletedTag] = await withUserContext(userId, role, async (tx) => {
       return tx.delete(tags).where(eq(tags.id, id)).returning();
     });
 
     if (!deletedTag) {
+      req.log.warn({ tagId: id }, "Attempt to delete non-existent tag");
       return res.status(404).json({ error: "Tag not found" });
     }
 
@@ -157,7 +162,7 @@ export const deleteTag = async (req: AuthenticatedRequest, res: Response) => {
       message: "Tag deleted successfully",
     });
   } catch (error) {
-    console.error("Delete tag error:", error);
+    req.log.error({ err: error, tagId: id }, "Failed to delete tag");
     res.status(500).json({ error: "Failed to delete tag" });
   }
 };
@@ -188,7 +193,7 @@ export const getPopularTags = async (req: Request, res: Response) => {
       tags: popularTags,
     });
   } catch (error) {
-    console.error("Get popular tags error:", error);
+    req.log.error({ err: error }, "Failed to fetch popular tags");
     res.status(500).json({ error: "Failed to fetch popular tags" });
   }
 };

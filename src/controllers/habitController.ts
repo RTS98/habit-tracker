@@ -39,7 +39,7 @@ export const createHabit = async (req: AuthenticatedRequest, res: Response) => {
       habit: result,
     });
   } catch (error) {
-    console.error("Create habit error:", error);
+    req.log.error({ err: error }, "Failed to create habit");
     res.status(500).json({ error: "Failed to create habit" });
   }
 };
@@ -80,7 +80,7 @@ export const getUserHabits = async (
       habits: habitsWithTags,
     });
   } catch (error) {
-    console.error("Get habits error:", error);
+    req.log.error({ err: error }, "Failed to fetch habits");
     res.status(500).json({ error: "Failed to fetch habits" });
   }
 };
@@ -89,9 +89,10 @@ export const getHabitById = async (
   req: AuthenticatedRequest,
   res: Response,
 ) => {
+  const id = req.params.id as string;
+  const { id: userId, role } = req.user!;
+
   try {
-    const id = req.params.id as string;
-    const { id: userId, role } = req.user!;
     const habit = await withUserContext(userId, role, async (tx) => {
       return tx.query.habits.findFirst({
         where: and(eq(habits.id, id), eq(habits.userId, userId)),
@@ -110,6 +111,7 @@ export const getHabitById = async (
     });
 
     if (!habit) {
+      req.log.warn({ habitId: id, userId }, "Habit not found");
       return res.status(404).json({ error: "Habit not found" });
     }
 
@@ -124,16 +126,20 @@ export const getHabitById = async (
       habit: habitWithTags,
     });
   } catch (error) {
-    console.error("Get habit error:", error);
+    req.log.error(
+      { err: error, habitId: id, userId },
+      `Failed to fetch habit with id ${id}`,
+    );
     res.status(500).json({ error: "Failed to fetch habit" });
   }
 };
 
 export const updateHabit = async (req: AuthenticatedRequest, res: Response) => {
+  const id = req.params.id as string;
+  const { id: userId, role } = req.user!;
+  const { tagIds, ...updates } = req.body;
+
   try {
-    const id = req.params.id as string;
-    const { id: userId, role } = req.user!;
-    const { tagIds, ...updates } = req.body;
     const result = await withUserContext(userId, role, async (tx) => {
       // Update the habit
       const [updatedHabit] = await tx
@@ -170,17 +176,22 @@ export const updateHabit = async (req: AuthenticatedRequest, res: Response) => {
     });
   } catch (error: any) {
     if (error.message === "Habit not found") {
+      req.log.warn({ habitId: id, userId }, "Habit not found for update");
       return res.status(404).json({ error: "Habit not found" });
     }
-    console.error("Update habit error:", error);
+    req.log.error(
+      { err: error, habitId: id, userId },
+      "Failed to update habit",
+    );
     res.status(500).json({ error: "Failed to update habit" });
   }
 };
 
 export const deleteHabit = async (req: AuthenticatedRequest, res: Response) => {
+  const id = req.params.id as string;
+  const { id: userId, role } = req.user!;
+
   try {
-    const id = req.params.id as string;
-    const { id: userId, role } = req.user!;
     const [deletedHabit] = await withUserContext(userId, role, async (tx) => {
       return tx
         .delete(habits)
@@ -189,6 +200,7 @@ export const deleteHabit = async (req: AuthenticatedRequest, res: Response) => {
     });
 
     if (!deletedHabit) {
+      req.log.warn({ habitId: id, userId }, "Habit not found for deletion");
       return res.status(404).json({ error: "Habit not found" });
     }
 
@@ -196,7 +208,10 @@ export const deleteHabit = async (req: AuthenticatedRequest, res: Response) => {
       message: "Habit deleted successfully",
     });
   } catch (error) {
-    console.error("Delete habit error:", error);
+    req.log.error(
+      { err: error, habitId: id, userId },
+      "Failed to delete habit",
+    );
     res.status(500).json({ error: "Failed to delete habit" });
   }
 };

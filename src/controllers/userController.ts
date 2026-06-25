@@ -24,16 +24,16 @@ export const getAllUsers = async (req: AuthenticatedRequest, res: Response) => {
 
     res.json({ users: allUsers });
   } catch (error) {
-    console.error("Get all users error:", error);
+    req.log.error({ err: error }, "Failed to fetch users");
     res.status(500).json({ error: "Failed to fetch users" });
   }
 };
 
 export const getProfile = async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const userId = req.params.id as string;
-    const { id, role } = req.user!;
+  const userId = req.params.id as string;
+  const { id, role } = req.user!;
 
+  try {
     const [user] = await withUserContext(id, role, async (tx) =>
       tx
         .select({
@@ -50,12 +50,13 @@ export const getProfile = async (req: AuthenticatedRequest, res: Response) => {
     );
 
     if (!user) {
+      req.log.warn({ userId }, "User not found");
       return res.status(404).json({ error: "User not found" });
     }
 
     res.json({ user });
   } catch (error) {
-    console.error("Get profile error:", error);
+    req.log.error({ err: error, userId }, "Failed to fetch profile");
     res.status(500).json({ error: "Failed to fetch profile" });
   }
 };
@@ -84,7 +85,7 @@ export const createUser = async (req: AuthenticatedRequest, res: Response) => {
 
     res.status(201).json({ user: newUser });
   } catch (error) {
-    console.error("Create user error:", error);
+    req.log.error({ err: error }, "Failed to create user");
     res.status(500).json({ error: "Failed to create user" });
   }
 };
@@ -93,10 +94,11 @@ export const updateProfile = async (
   req: AuthenticatedRequest,
   res: Response,
 ) => {
+  const { id: userId, role } = req.user!;
+  const userToUpdateId = req.params.id as string;
+  const { firstName, lastName } = req.body;
+
   try {
-    const { id: userId, role } = req.user!;
-    const userToUpdateId = req.params.id as string;
-    const { firstName, lastName } = req.body;
     const [updatedUser] = await withUserContext(userId, role, async (tx) =>
       tx
         .update(users)
@@ -117,6 +119,10 @@ export const updateProfile = async (
     );
 
     if (!updatedUser) {
+      req.log.warn(
+        { userId: userToUpdateId },
+        "Attempt to update non-existent user",
+      );
       return res.status(404).json({ error: "User not found" });
     }
 
@@ -125,7 +131,10 @@ export const updateProfile = async (
       user: updatedUser,
     });
   } catch (error) {
-    console.error("Update profile error:", error);
+    req.log.error(
+      { err: error, userId: userToUpdateId },
+      "Failed to update profile",
+    );
     res.status(500).json({ error: "Failed to update profile" });
   }
 };
@@ -134,16 +143,20 @@ export const changePassword = async (
   req: AuthenticatedRequest,
   res: Response,
 ) => {
-  try {
-    const { id: userId, role } = req.user!;
-    const { currentPassword, newPassword } = req.body;
+  const { id: userId, role } = req.user!;
+  const { currentPassword, newPassword } = req.body;
 
+  try {
     // Get current user with password
     const [user] = await withUserContext(userId, role, async (tx) =>
       tx.select().from(users).where(eq(users.id, userId)),
     );
 
     if (!user) {
+      req.log.warn(
+        { userId },
+        "User not found when attempting to change password",
+      );
       return res.status(404).json({ error: "User not found" });
     }
 
@@ -154,6 +167,7 @@ export const changePassword = async (
     );
 
     if (!isValidPassword) {
+      req.log.warn({ userId }, "Incorrect current password provided");
       return res.status(400).json({ error: "Current password is incorrect" });
     }
 
@@ -175,26 +189,34 @@ export const changePassword = async (
       message: "Password changed successfully",
     });
   } catch (error) {
-    console.error("Change password error:", error);
+    req.log.error({ err: error, userId }, "Failed to change password");
     res.status(500).json({ error: "Failed to change password" });
   }
 };
 
 export const deleteUser = async (req: AuthenticatedRequest, res: Response) => {
+  const userToDeleteId = req.params.id as string;
+  const { id: userId, role } = req.user!;
+
   try {
-    const userToDeleteId = req.params.id as string;
-    const { id: userId, role } = req.user!;
     const [deletedUser] = await withUserContext(userId, role, async (tx) =>
       tx.delete(users).where(eq(users.id, userToDeleteId)).returning(),
     );
 
     if (!deletedUser) {
+      req.log.warn(
+        { userId: userToDeleteId },
+        "Attempt to delete non-existent user",
+      );
       return res.status(404).json({ error: "User not found" });
     }
 
     res.status(204).json({ message: "User deleted successfully" });
   } catch (error) {
-    console.error("Delete user error:", error);
+    req.log.error(
+      { err: error, userId: userToDeleteId },
+      "Failed to delete user",
+    );
     res.status(500).json({ error: "Failed to delete user" });
   }
 };
