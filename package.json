@@ -15,7 +15,10 @@
     "db:push": "drizzle-kit push",
     "db:migrate": "drizzle-kit migrate --config=drizzle.config.ts",
     "db:studio": "drizzle-kit studio",
-    "db:seed": "tsx src/db/seed.ts"
+    "db:seed": "tsx src/db/seed.ts",
+    "db:seed:users": "tsx src/db/seedUsers.ts",
+    "db:seed:tags": "tsx src/db/seedTags.ts",
+    "db:seed:habits": "tsx src/db/seedHabits.ts"
   },
   "keywords": [
     "habit",
@@ -47,6 +50,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@faker-js/faker": "^10.5.0",
     "@types/bcrypt": "^6.0.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
