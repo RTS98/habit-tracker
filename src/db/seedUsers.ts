@@ -1,7 +1,7 @@
-import db from "./connection.ts";
 import { users } from "./schema.ts";
 import { hashPassword } from "../utils/password.ts";
 import { faker } from "@faker-js/faker";
+import authDb from "./auth-connection.ts";
 
 const USER_COUNT = 1000;
 const CHUNK_SIZE = 500;
@@ -29,7 +29,7 @@ async function seedUsers() {
   // limit and to avoid one giant statement.
   for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
     const chunk = rows.slice(i, i + CHUNK_SIZE);
-    await db.insert(users).values(chunk).onConflictDoNothing();
+    await authDb.insert(users).values(chunk).onConflictDoNothing();
     console.log(
       `  inserted ${Math.min(i + CHUNK_SIZE, rows.length)}/${rows.length}`,
     );

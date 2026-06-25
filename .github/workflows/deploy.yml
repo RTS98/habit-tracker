@@ -47,8 +47,5 @@ jobs:
             NODE_ENV=development npm ci
             npm run build
             npm run db:migrate
-            npm run db:seed:users
-            npm run db:seed:habits
-            npm run db:seed:tags
             npm prune --omit=dev
             pm2 restart habit-tracker --update-env

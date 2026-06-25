@@ -16,9 +16,9 @@
     "db:migrate": "drizzle-kit migrate --config=drizzle.config.ts",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx src/db/seed.ts",
-    "db:seed:users": "tsx src/db/seedUsers.ts",
-    "db:seed:tags": "tsx src/db/seedTags.ts",
-    "db:seed:habits": "tsx src/db/seedHabits.ts"
+    "db:seed:users": "node dist/src/db/seedUsers.js",
+    "db:seed:tags": "node dist/src/db/seedTags.js",
+    "db:seed:habits": "node dist/src/db/seedHabits.js"
   },
   "keywords": [
     "habit",
