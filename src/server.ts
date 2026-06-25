@@ -12,8 +12,12 @@ import { timeout } from "./middleware/timeout.ts";
 import { pinoHttp } from "pino-http";
 import { randomUUID } from "crypto";
 import { client } from "./db/connection.ts";
+import { startEventLoopMonitor } from "./utils/monitorEventLoop.ts";
+import pino from "pino";
 
+const logger = pino();
 const app = express();
+startEventLoopMonitor(logger); // Monitor event loop every 10 seconds
 
 app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
 app.use(express.json());
