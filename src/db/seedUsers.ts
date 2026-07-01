@@ -14,14 +14,18 @@ async function seedUsers() {
   // reason to pay the bcrypt cost 1000 times.
   const passwordHash = await hashPassword(SHARED_PASSWORD);
 
-  const rows = Array.from({ length: USER_COUNT }, (_, i) => {
-    const n = i + 1;
+  const rows = Array.from({ length: USER_COUNT }, () => {
+    // Spread signups across the last 2 years. updatedAt is always >= createdAt.
+    const createdAt = faker.date.past({ years: 2 });
+    const updatedAt = faker.date.between({ from: createdAt, to: new Date() });
     return {
       email: faker.internet.email(),
       username: faker.internet.username(),
       passwordHash,
       firstName: faker.person.firstName(),
       lastName: faker.person.lastName(),
+      createdAt,
+      updatedAt,
     };
   });
 

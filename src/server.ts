@@ -15,7 +15,14 @@ import { client } from "./db/connection.ts";
 import { startEventLoopMonitor } from "./utils/monitorEventLoop.ts";
 import pino from "pino";
 
-const logger = pino();
+const logger = pino({
+  transport: {
+    target: "pino-pretty",
+    options: {
+      colorize: true,
+    },
+  },
+});
 const app = express();
 startEventLoopMonitor(logger); // Monitor event loop every 10 seconds
 
@@ -25,6 +32,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
 app.use(
   pinoHttp({
+    transport: {
+      target: "pino-pretty",
+      options: {
+        colorize: true,
+      },
+    },
     genReqId: (req, res) => {
       const incoming = req.headers["x-request-id"];
       const id = incoming || randomUUID();

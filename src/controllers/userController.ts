@@ -1,11 +1,25 @@
 import type { Response } from "express";
 import type { AuthenticatedRequest } from "../middleware/auth.ts";
 import { users } from "../db/schema.ts";
-import { eq } from "drizzle-orm";
+import { eq, or, gt, and, asc } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import { withUserContext } from "../db/userContext.ts";
 
+type Cursor = {
+  id: string;
+  createdAt: string;
+};
+
 export const getAllUsers = async (req: AuthenticatedRequest, res: Response) => {
+  const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
+  const cursor = (req.query.cursor as string) || null;
+  let decodedCursor: Cursor | null = null;
+  if (cursor) {
+    decodedCursor = JSON.parse(
+      Buffer.from(cursor, "base64").toString("utf-8"),
+    ) as Cursor;
+  }
+
   try {
     const { id, role } = req.user!;
     const allUsers = await withUserContext(id, role, async (tx) =>
@@ -19,10 +33,31 @@ export const getAllUsers = async (req: AuthenticatedRequest, res: Response) => {
           createdAt: users.createdAt,
           updatedAt: users.updatedAt,
         })
-        .from(users),
+        .from(users)
+        .where(
+          decodedCursor
+            ? or(
+                gt(users.createdAt, new Date(decodedCursor.createdAt)),
+                and(
+                  eq(users.createdAt, new Date(decodedCursor.createdAt)),
+                  gt(users.id, decodedCursor.id),
+                ),
+              )
+            : undefined,
+        )
+        .limit(limit)
+        .orderBy(asc(users.createdAt), asc(users.id)),
     );
 
-    res.json({ users: allUsers });
+    res.json({
+      users: allUsers,
+      cursor: Buffer.from(
+        JSON.stringify({
+          id: allUsers[allUsers.length - 1]?.id,
+          createdAt: allUsers[allUsers.length - 1]?.createdAt?.toISOString(),
+        }),
+      ).toString("base64"),
+    });
   } catch (error) {
     req.log.error({ err: error }, "Failed to fetch users");
     res.status(500).json({ error: "Failed to fetch users" });
