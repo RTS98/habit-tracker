@@ -5,7 +5,7 @@ import authRoutes from "./routes/authRoutes.ts";
 import userRoutes from "./routes/userRoutes.ts";
 import habitRoutes from "./routes/habitRoutes.ts";
 import tagRoutes from "./routes/tagRoutes.ts";
-import env from "../env.ts";
+import env, { isProduction } from "../env.ts";
 import { notFound } from "./middleware/notFound.ts";
 import { errorHandler } from "./middleware/errorHandler.ts";
 import { timeout } from "./middleware/timeout.ts";
@@ -15,13 +15,14 @@ import { client } from "./db/connection.ts";
 import { startEventLoopMonitor } from "./utils/monitorEventLoop.ts";
 import pino from "pino";
 
+// Pretty-print in dev only. In production, leave transport undefined so pino
+// emits plain JSON to stdout — no pino-pretty dependency needed at runtime.
+const prettyTransport = isProduction
+  ? undefined
+  : { target: "pino-pretty", options: { colorize: true } };
+
 const logger = pino({
-  transport: {
-    target: "pino-pretty",
-    options: {
-      colorize: true,
-    },
-  },
+  transport: prettyTransport,
 });
 const app = express();
 startEventLoopMonitor(logger); // Monitor event loop every 10 seconds
@@ -32,12 +33,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
 app.use(
   pinoHttp({
-    transport: {
-      target: "pino-pretty",
-      options: {
-        colorize: true,
-      },
-    },
+    transport: prettyTransport,
     genReqId: (req, res) => {
       const incoming = req.headers["x-request-id"];
       const id = incoming || randomUUID();
